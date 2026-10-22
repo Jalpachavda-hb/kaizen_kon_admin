@@ -2,7 +2,6 @@ import GridShape from "../../components/common/GridShape";
 import { Link } from "react-router";
 import PageMeta from "../../components/common/PageMeta";
 import { isAuthenticated } from "../../services/authService";
-
 export default function NotFound() {
   const isAuth = isAuthenticated();
 

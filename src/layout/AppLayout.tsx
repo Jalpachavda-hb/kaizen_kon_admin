@@ -17,7 +17,7 @@ const LayoutContent: React.FC = () => {
       </div>
       <div
         className={`flex-1 min-w-0 max-w-full overflow-hidden transition-all duration-300 ease-in-out print:ml-0 print:overflow-visible print:p-0 ${
-          isExpanded || isHovered ? "lg:ml-[290px]" : "lg:ml-[90px]"
+          isExpanded || isHovered ? "lg:ml-[270px]" : "lg:ml-[78px]"
         } ${isMobileOpen ? "ml-0" : ""}`}
       >
         <div className="print:hidden">

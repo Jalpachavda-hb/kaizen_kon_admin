@@ -1,133 +1,76 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useLocation } from "react-router";
-
-// Icons from internal icons directory and custom menu icons
-import {
-  ChevronDownIcon,
-  GridIcon,
-  HorizontaLDots,
-} from "../icons";
-import {
-  BookOpenIcon,
-  FolderMenuIcon,
-  HelpCircleIcon,
-  UserCheckIcon,
-  MedalAwardIcon,
-  TrendingUpIcon,
-  WebsiteContentIcon,
-  HomeMenuIcon,
-  HandshakeIcon,
-  QuoteReviewIcon,
-  ZoomMeetingIcon,
-  GoogleGIcon,
-  DesktopMonitorIcon,
-  ToolIcon,
-} from "../icons/menuIcons";
 import { useSidebar } from "../context/SidebarContext";
+import {
+  DashboardIcon,
+  SpeakersIcon,
+  SessionsIcon,
+  DelegatesIcon,
+  SearchMiniIcon,
+  SendEmailIcon,
+  CampaignsIcon,
+} from "../icons/conferenceIcons";
 
-export type SubItem = {
-  name: string;
-  path: string;
-  icon?: React.ReactNode;
-  badge?: string | number;
-};
+export interface NavSection {
+  title: string;
+  items: {
+    name: string;
+    path: string;
+    aliases?: string[];
+    icon: React.ReactNode;
+    badge?: string | number;
+  }[];
+}
 
-export type NavItem = {
-  name: string;
-  icon: React.ReactNode;
-  path?: string;
-  badge?: string | number;
-  subItems?: SubItem[];
-};
-
-const navItems: NavItem[] = [
+const conferenceNavSections: NavSection[] = [
   {
-    icon: <GridIcon />,
-    name: "Dashboard",
-    path: "/",
-  },
-  {
-    name: "Microcredential Course List",
-    path: "/microcredential/course-list",
-    icon: <BookOpenIcon className="w-5 h-5" />,
-  },
-  {
-    name: "Microcredential Module List By Course",
-    path: "/microcredential/module-list",
-    icon: <FolderMenuIcon className="w-5 h-5" />,
-  },
-  {
-    name: "Common Discussion",
-    icon: <UserCheckIcon className="w-5 h-5" />,
-    path: "/microcredential/common-discussion",
-    badge: "0",
-  },
-  {
-    name: "Quizzes",
-    icon: <MedalAwardIcon className="w-5 h-5" />,
-    subItems: [
+    title: "Overview",
+    items: [
       {
-        name: "Microcredential Quiz",
-        path: "/microcredential/quiz",
-        icon: <HelpCircleIcon className="w-4 h-4" />,
-      },
-      {
-        name: "Microcredential Quiz Result",
-        path: "/microcredential/quiz-result",
-        icon: <TrendingUpIcon className="w-4 h-4" />,
-      },
-      // {
-      //   name: "Microcredential Checkpoint Quiz",
-      //   path: "/microcredential/checkpoint-quiz",
-      //   icon: <MedalAwardIcon className="w-4 h-4" />,
-      // },
-      // {
-      //   name: "Microcredential Checkpoint Quiz Report",
-      //   path: "/microcredential/checkpoint-quiz-report",
-      //   icon: <BarChartReportIcon className="w-4 h-4" />,
-      // },
-    ],
-  },
-
-  {
-    icon: <WebsiteContentIcon className="w-5 h-5" />,
-    name: "Website Content",
-    subItems: [
-      {
-        name: "Home Page List",
-        path: "/website/home-page-list",
-        icon: <HomeMenuIcon className="w-4 h-4" />,
-      },
-      {
-        name: "Trusted Logo List",
-        path: "/website/trusted-logo-list",
-        icon: <HandshakeIcon className="w-4 h-4" />,
-      },
-      {
-        name: "Testimonial Review List",
-        path: "/website/testimonial-review-list",
-        icon: <QuoteReviewIcon className="w-4 h-4" />,
+        name: "Dashboard",
+        path: "/",
+        aliases: ["/dashboard"],
+        icon: <DashboardIcon className="w-5 h-5" />,
       },
     ],
   },
   {
-    name: "Tool",
-    icon: <ToolIcon className="w-5 h-5" />,
-    subItems: [
+    title: "Conference",
+    items: [
       {
-        name: "Zoom Meeting List",
-        path: "/zoom-meeting-list",
-        icon: <ZoomMeetingIcon className="w-4 h-4" />,
+        name: "Speakers",
+        path: "/speakers",
+        aliases: ["/conference/speakers"],
+        icon: <SpeakersIcon className="w-5 h-5" />,
       },
       {
-        name: "Google Calender List",
-        path: "/google-calender-list",
-        icon: <GoogleGIcon className="w-4 h-4" />,
+        name: "Sessions",
+        path: "/sessions",
+        aliases: ["/conference/sessions"],
+        icon: <SessionsIcon className="w-5 h-5" />,
       },
       {
-        name: "Google Meet List",
-        path: "/google-meet-list",
-        icon: <DesktopMonitorIcon className="w-4 h-4" />,
+        name: "Delegates",
+        path: "/delegates",
+        aliases: ["/conference/delegates"],
+        icon: <DelegatesIcon className="w-5 h-5" />,
+      },
+    ],
+  },
+  {
+    title: "Agent Settings",
+    items: [
+      {
+        name: "Send To Email",
+        path: "/send-to-email",
+        aliases: ["/conference/send-to-email", "/agent-settings/send-to-email"],
+        icon: <SendEmailIcon className="w-5 h-5" />,
+      },
+      {
+        name: "Campaigns",
+        path: "/campaigns",
+        aliases: ["/conference/campaigns", "/agent-settings/campaigns"],
+        icon: <CampaignsIcon className="w-5 h-5" />,
       },
     ],
   },
@@ -142,215 +85,159 @@ const AppSidebar: React.FC = () => {
     toggleMobileSidebar,
   } = useSidebar();
   const location = useLocation();
+  const [searchFilter, setSearchFilter] = useState("");
 
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
-
-  const isActive = useCallback(
-    (path?: string) => (path ? location.pathname === path : false),
-    [location.pathname]
-  );
-
-  const isParentActive = useCallback(
-    (nav: NavItem): boolean => {
-      if (!nav.subItems) return false;
-      return nav.subItems.some((sub) => isActive(sub.path));
-    },
-    [isActive]
-  );
-
-  useEffect(() => {
-    const activeParentIndex = navItems.findIndex((nav) =>
-      nav.subItems?.some((subItem) => subItem.path && isActive(subItem.path))
-    );
-    if (activeParentIndex !== -1) {
-      setOpenIndex(activeParentIndex);
-    } else {
-      setOpenIndex(null);
+  const isCurrentActive = (path: string, aliases?: string[]) => {
+    if (location.pathname === path) return true;
+    if (aliases && aliases.some((a) => location.pathname === a || location.pathname.startsWith(a + "/"))) {
+      return true;
     }
-  }, [location.pathname, isActive]);
-
-  const handleToggle = (index: number) => {
-    setOpenIndex((prev) => (prev === index ? null : index));
+    if (path !== "/" && location.pathname.startsWith(path)) {
+      return true;
+    }
+    return false;
   };
 
-  const renderMenuItems = (items: NavItem[]) => (
-    <ul className="flex flex-col gap-2">
-      {items.map((nav, index) => {
-        const isParentOpen = openIndex === index;
-        const hasSubItems = Boolean(nav.subItems && nav.subItems.length > 0);
-        const itemActive = nav.path ? isActive(nav.path) : false;
-
-        return (
-          <li key={nav.name}>
-            {hasSubItems ? (
-              <button
-                onClick={() => handleToggle(index)}
-                className={`menu-item group menu-item-inactive cursor-pointer ${
-                  !isExpanded && !isHovered
-                    ? "lg:justify-center"
-                    : "lg:justify-start"
-                }`}
-              >
-                <span
-                  className={`menu-item-icon-size ${
-                    isParentActive(nav) || isParentOpen
-                      ? "text-brand-500 dark:text-brand-400"
-                      : "menu-item-icon-inactive"
-                  }`}
-                >
-                  {nav.icon}
-                </span>
-                {(isExpanded || isHovered || isMobileOpen) && (
-                  <span
-                    className={`menu-item-text ${
-                      isParentActive(nav)
-                        ? "font-semibold text-gray-900 dark:text-white"
-                        : ""
-                    }`}
-                  >
-                    {nav.name}
-                  </span>
-                )}
-                {(isExpanded || isHovered || isMobileOpen) && (
-                  <ChevronDownIcon
-                    className={`ml-auto w-5 h-5 transition-transform duration-200 ${
-                      isParentOpen
-                        ? "rotate-180 text-brand-500"
-                        : "text-gray-400 group-hover:text-gray-500"
-                    }`}
-                  />
-                )}
-              </button>
-            ) : (
-              nav.path && (
-                <Link
-                  to={nav.path}
-                  onClick={() => isMobileOpen && toggleMobileSidebar()}
-                  className={`menu-item group ${
-                    itemActive ? "menu-item-active" : "menu-item-inactive"
-                  } ${
-                    !isExpanded && !isHovered
-                      ? "lg:justify-center"
-                      : "lg:justify-start"
-                  }`}
-                >
-                  <span
-                    className={`menu-item-icon-size ${
-                      itemActive
-                        ? "menu-item-icon-active"
-                        : "menu-item-icon-inactive"
-                    }`}
-                  >
-                    {nav.icon}
-                  </span>
-                  {(isExpanded || isHovered || isMobileOpen) && (
-                    <span className="menu-item-text">{nav.name}</span>
-                  )}
-                  {(isExpanded || isHovered || isMobileOpen) &&
-                    nav.badge !== undefined && (
-                      <span className="ml-auto bg-error-500 text-white text-xs font-bold px-2 py-0.5 rounded-md min-w-[20px] text-center">
-                        {nav.badge}
-                      </span>
-                    )}
-                </Link>
-              )
-            )}
-
-            {/* Submenu */}
-            {hasSubItems &&
-              isParentOpen &&
-              (isExpanded || isHovered || isMobileOpen) && (
-                <ul className="mt-1 space-y-1 ml-7">
-                  {nav.subItems!.map((subItem) => (
-                    <li key={subItem.name}>
-                      <Link
-                        to={subItem.path}
-                        onClick={() => isMobileOpen && toggleMobileSidebar()}
-                        className={`menu-dropdown-item flex items-center justify-between ${
-                          isActive(subItem.path)
-                            ? "menu-dropdown-item-active"
-                            : "menu-dropdown-item-inactive"
-                        }`}
-                      >
-                        <span className="flex items-center gap-2.5 truncate">
-                          {subItem.icon && (
-                            <span className="w-4 h-4 shrink-0 flex items-center justify-center">
-                              {subItem.icon}
-                            </span>
-                          )}
-                          <span className="truncate">{subItem.name}</span>
-                        </span>
-                        {subItem.badge !== undefined && (
-                          <span className="ml-auto bg-error-500 text-white text-[11px] font-bold px-2 py-0.5 rounded-md min-w-[20px] text-center shadow-xs">
-                            {subItem.badge}
-                          </span>
-                        )}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-          </li>
-        );
-      })}
-    </ul>
-  );
+  const showFullSidebar = isExpanded || isHovered || isMobileOpen;
 
   return (
     <aside
-      className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
-        ${isExpanded || isMobileOpen
-          ? "w-[290px]"
-          : isHovered
-            ? "w-[290px]"
-            : "w-[90px]"
-        }
-        ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
-        lg:translate-x-0`}
+      className={`fixed top-0 left-0 z-50 flex flex-col h-screen bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-all duration-200 ease-in-out ${
+        showFullSidebar ? "w-[270px]" : "w-[78px]"
+      } ${isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
       onMouseEnter={() => !isExpanded && setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div
-        className={`py-8 flex ${!isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
-          }`}
-      >
-        <Link to="/">
-          {isExpanded || isHovered || isMobileOpen ? (
+      {/* Top Header / Logo Box */}
+      <div className="flex items-center justify-center px-4 py-3 border-b border-gray-200 dark:border-gray-800">
+        <Link
+          to="/"
+          className="flex items-center justify-center w-full"
+        >
+          <div
+            className={`py-2 px-3 rounded-xl border border-gray-200/90 dark:border-gray-700/80 bg-white dark:bg-gray-800 flex items-center justify-center shadow-xs transition-all ${
+              showFullSidebar ? "w-full max-w-[240px]" : "w-12 h-12 p-1"
+            }`}
+          >
             <img
-              src="/newlg.png"
-              alt="Ignitoverse Logo"
-              className="h-10 w-auto max-w-[190px] object-contain"
+              src="/logokaizecon.png"
+              alt="Kaizen Con 2027 Logo"
+              className={`${
+                showFullSidebar ? "h-20 max-h-24" : "h-9 max-h-9"
+              } w-auto max-w-full object-contain transition-all`}
+              onError={(e) => {
+                // fallback to text if image fails
+                (e.currentTarget as HTMLElement).style.display = "none";
+              }}
             />
-          ) : (
-            <img
-              src="/fav.png"
-              alt="Ignitoverse Icon"
-              className="h-8 w-8 object-contain"
-            />
-          )}
+            <span className="font-extrabold text-base tracking-tight text-[#AA2D7B] uppercase hidden only-child:block">
+              Kaizen<span className="text-[#55355E]">Con</span>
+            </span>
+          </div>
         </Link>
       </div>
-      <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
-        <nav className="mb-6">
-          <div className="flex flex-col gap-4">
-            <div>
-              <h2
-                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${!isExpanded && !isHovered
-                  ? "lg:justify-center"
-                  : "justify-start"
-                  }`}
-              >
-                {isExpanded || isHovered || isMobileOpen ? (
-                  "Menu"
-                ) : (
-                  <HorizontaLDots className="size-6" />
-                )}
-              </h2>
-              {renderMenuItems(navItems)}
-            </div>
+
+      {/* Sidebar Search Bar */}
+      {showFullSidebar && (
+        <div className="px-3.5 pt-3.5 pb-1">
+          <div className="relative flex items-center">
+            <span className="absolute left-2.5 text-gray-400 pointer-events-none">
+              <SearchMiniIcon className="w-4 h-4" />
+            </span>
+            <input
+              type="text"
+              placeholder="Search apps and model..."
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              className="w-full pl-8 pr-8 py-2 text-sm bg-white dark:bg-gray-800/80 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-lg placeholder-gray-400 focus:outline-none focus:border-[#AA2D7B] focus:ring-1 focus:ring-[#AA2D7B] transition-all"
+            />
+            <span className="absolute right-2.5 px-1.5 py-0.5 text-[10px] font-mono text-gray-400 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded">
+              ^K
+            </span>
           </div>
+        </div>
+      )}
+
+      {/* Navigation Sections */}
+      <div className="flex-1 overflow-y-auto px-3.5 py-2.5 no-scrollbar">
+        <nav className="flex flex-col gap-3.5">
+          {conferenceNavSections.map((section, sIndex) => {
+            const filteredItems = section.items.filter((item) =>
+              item.name.toLowerCase().includes(searchFilter.toLowerCase().trim())
+            );
+
+            if (filteredItems.length === 0 && searchFilter.trim() !== "") {
+              return null;
+            }
+
+            return (
+              <div key={section.title}>
+                {sIndex > 0 && (
+                  <div className="my-2.5 border-t border-gray-200/80 dark:border-gray-800" />
+                )}
+
+                {showFullSidebar && (
+                  <h3 className="px-2.5 mb-1.5 text-[13px] font-bold text-gray-900 dark:text-gray-100 tracking-tight">
+                    {section.title}
+                  </h3>
+                )}
+
+                <ul className="flex flex-col gap-1">
+                  {filteredItems.map((item) => {
+                    const active = isCurrentActive(item.path, item.aliases);
+
+                    return (
+                      <li key={item.name}>
+                        <Link
+                          to={item.path}
+                          onClick={() => isMobileOpen && toggleMobileSidebar()}
+                          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                            active
+                              ? "bg-[#f5ebf3] text-[#55355E] dark:bg-[#55355E]/30 dark:text-[#f5d8e9] font-bold shadow-xs"
+                              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100/80 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white"
+                          } ${!showFullSidebar ? "justify-center px-2" : ""}`}
+                          title={!showFullSidebar ? item.name : undefined}
+                        >
+                          <span
+                            className={`shrink-0 flex items-center justify-center ${
+                              active
+                                ? "text-[#55355E] dark:text-[#f5d8e9]"
+                                : "text-gray-500 dark:text-gray-400"
+                            }`}
+                          >
+                            {item.icon}
+                          </span>
+                          {showFullSidebar && (
+                            <span className="truncate flex-1 text-sm font-medium">
+                              {item.name}
+                            </span>
+                          )}
+                          {showFullSidebar && item.badge && (
+                            <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-[#AA2D7B] text-white font-semibold">
+                              {item.badge}
+                            </span>
+                          )}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            );
+          })}
         </nav>
       </div>
+
+      {/* Sidebar Footer info / Theme Badge */}
+      {showFullSidebar && (
+        <div className="p-3 border-t border-gray-100 dark:border-gray-800 text-[11px] text-gray-400 flex items-center justify-between">
+          <span className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-[#AA2D7B] animate-pulse" />
+            <span className="font-semibold text-gray-600 dark:text-gray-300">Kaizen Con 2027</span>
+          </span>
+          <span className="font-mono text-[10px] text-gray-400">Admin v2.0</span>
+        </div>
+      )}
     </aside>
   );
 };

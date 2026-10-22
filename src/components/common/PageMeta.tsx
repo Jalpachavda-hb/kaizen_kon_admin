@@ -10,6 +10,7 @@ const PageMeta = ({
   <Helmet>
     <title>{title}</title>
     <meta name="description" content={description} />
+    <link rel="icon" type="image/png" href="/favicon.png" />
   </Helmet>
 );
 

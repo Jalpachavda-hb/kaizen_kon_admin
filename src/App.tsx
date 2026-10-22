@@ -2,59 +2,22 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router";
 import SignIn from "./pages/AuthPages/SignIn";
 import NotFound from "./pages/OtherPage/NotFound";
 import UserProfiles from "./pages/UserProfiles";
-import Videos from "./pages/UiElements/Videos";
-import Images from "./pages/UiElements/Images";
-import Alerts from "./pages/UiElements/Alerts";
-import Badges from "./pages/UiElements/Badges";
-import Avatars from "./pages/UiElements/Avatars";
-import Buttons from "./pages/UiElements/Buttons";
-import LineChart from "./pages/Charts/LineChart";
-import BarChart from "./pages/Charts/BarChart";
-import Calendar from "./pages/Calendar";
-import BasicTables from "./pages/Tables/BasicTables";
-import FormElements from "./pages/Forms/FormElements";
-import Blank from "./pages/Blank";
 import AppLayout from "./layout/AppLayout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import PublicRoute from "./components/auth/PublicRoute";
 import { ScrollToTop } from "./components/common/ScrollToTop";
-import Home from "./pages/Dashboard/Home";
-import PlaceholderPage from "./pages/PlaceholderPage";
-import TestimonialList from "./components/testimonial/TestimonialList";
-import AddTestimonialReview from "./components/testimonial/AddTestimonialReview";
-import EditTestimonialReview from "./components/testimonial/EditTestimonialReview";
-import LogoList from "./components/TrustedLogo/LogoList";
-import HeroSectionList from "./components/hompage/HerosectionList";
-import {
-  MicrocredentialCourse,
-  AddMicrocredentialCourse,
-  EditMicrocredentialCourse,
-} from "./components/MicrocredentialCourse";
-import {
-  MicrocredentialModuleList,
-  AddEditMicrocredentialModule,
-  CourseModuleDetailList,
-} from "./components/MicrocredentialModule";
-import {
-  AddMicrocredentialCourseTopic,
-  EditMicrocredentialCourseTopic,
-  CommonDiscussion,
-  ModuleTopicDetailList,
-} from "./components/MicrocredentialTopic";
-import {
-  MicrocredentialQuizList,
-  AddEditMicrocredentialQuiz,
-  MicrocredentialQuizQuestionsPage,
-  MicrocredentialQuizResult,
-} from "./components/MicrocredentialQuiz";
-import GoogleMeetList from "./components/GoogleMeet/GoogleMeetList";
-import CreateGoogleMeet from "./components/GoogleMeet/CreateGoogleMeet";
-import EditGoogleMeet from "./components/GoogleMeet/EditGoogleMeet";
-import GoogleCalendarList from "./components/GoogleCalendar/GoogleCalendarList";
-import CreateGoogleCalendarEvent from "./components/GoogleCalendar/CreateGoogleCalendarEvent";
-import ZoomMeetingList from "./components/ZoomMeeting/ZoomMeetingList";
-import CreateZoomMeeting from "./components/ZoomMeeting/CreateZoomMeeting";
 import { ToastProvider } from "./context/ToastContext";
+
+// Kaizen Con Conference & System Pages
+import Home from "./pages/Dashboard/Home";
+import SpeakersPage from "./pages/Conference/SpeakersPage";
+import SessionsPage from "./pages/Conference/SessionsPage";
+import TopicsPage from "./pages/Conference/TopicsPage";
+import DelegatesPage from "./pages/Conference/DelegatesPage";
+import UsersPage from "./pages/System/UsersPage";
+import GroupsPage from "./pages/System/GroupsPage";
+import SendToEmailPage from "./pages/AgentSettings/SendToEmailPage";
+import CampaignsPage from "./pages/AgentSettings/CampaignsPage";
 
 export default function App() {
   return (
@@ -62,294 +25,45 @@ export default function App() {
       <Router>
         <ScrollToTop />
         <Routes>
-          {/* Protected Dashboard Layout */}
+          {/* Protected Dashboard & Conference Routes */}
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
+              {/* Overview */}
               <Route index path="/" element={<Home />} />
+              <Route path="/dashboard" element={<Home />} />
 
-              {/* Others Page */}
+              {/* Conference */}
+              <Route path="/speakers" element={<SpeakersPage />} />
+              <Route path="/conference/speakers" element={<SpeakersPage />} />
+
+              <Route path="/sessions" element={<SessionsPage />} />
+              <Route path="/conference/sessions" element={<SessionsPage />} />
+
+              <Route path="/topics" element={<TopicsPage />} />
+              <Route path="/conference/topics" element={<TopicsPage />} />
+
+              <Route path="/delegates" element={<DelegatesPage />} />
+              <Route path="/conference/delegates" element={<DelegatesPage />} />
+
+              {/* Agent Settings */}
+              <Route path="/send-to-email" element={<SendToEmailPage />} />
+              <Route path="/conference/send-to-email" element={<SendToEmailPage />} />
+              <Route path="/agent-settings/send-to-email" element={<SendToEmailPage />} />
+
+              <Route path="/campaigns" element={<CampaignsPage />} />
+              <Route path="/conference/campaigns" element={<CampaignsPage />} />
+              <Route path="/agent-settings/campaigns" element={<CampaignsPage />} />
+
+              {/* System */}
+              <Route path="/users" element={<UsersPage />} />
+              <Route path="/system/users" element={<UsersPage />} />
+
+              <Route path="/groups" element={<GroupsPage />} />
+              <Route path="/system/groups" element={<GroupsPage />} />
+              <Route path="/admin/auth/group" element={<GroupsPage />} />
+
+              {/* Profile */}
               <Route path="/profile" element={<UserProfiles />} />
-              <Route path="/calendar" element={<Calendar />} />
-              <Route path="/blank" element={<Blank />} />
-
-              {/* Forms */}
-              <Route path="/form-elements" element={<FormElements />} />
-
-              {/* Tables */}
-              <Route path="/basic-tables" element={<BasicTables />} />
-
-              {/* Ui Elements */}
-              <Route path="/alerts" element={<Alerts />} />
-              <Route path="/avatars" element={<Avatars />} />
-              <Route path="/badge" element={<Badges />} />
-              <Route path="/buttons" element={<Buttons />} />
-              <Route path="/images" element={<Images />} />
-              <Route path="/videos" element={<Videos />} />
-
-              {/* Charts */}
-              <Route path="/line-chart" element={<LineChart />} />
-              <Route path="/bar-chart" element={<BarChart />} />
-
-              {/* Microcredential Routes */}
-              <Route
-                path="/microcredential/course-list"
-                element={<MicrocredentialCourse />}
-              />
-              <Route
-                path="/microcredential/course-add"
-                element={<AddMicrocredentialCourse />}
-              />
-              <Route
-                path="/microcredential/course-edit/:id"
-                element={<EditMicrocredentialCourse />}
-              />
-              {/* Microcredential Module Routes */}
-              <Route
-                path="/microcredential/module-list"
-                element={<MicrocredentialModuleList />}
-              />
-              <Route
-                path="/microcredential/course-modules/:courseId"
-                element={<CourseModuleDetailList />}
-              />
-              <Route
-                path="/microcredential/module-list/:courseId"
-                element={<CourseModuleDetailList />}
-              />
-              <Route
-                path="/IgnitoMicroCredencialDetail/MicrocredentialModuleMasterList"
-                element={<MicrocredentialModuleList />}
-              />
-              <Route
-                path="/microcredential/module-add"
-                element={<AddEditMicrocredentialModule />}
-              />
-              <Route
-                path="/microcredential/module-edit/:id"
-                element={<AddEditMicrocredentialModule />}
-              />
-              <Route
-                path="/microcredential/module-topics/:moduleId"
-                element={<ModuleTopicDetailList />}
-              />
-              <Route
-                path="/microcredential/topic-list/:moduleId"
-                element={<ModuleTopicDetailList />}
-              />
-              <Route
-                path="/microcredential/topic-list"
-                element={<Navigate to="/microcredential/module-list" replace />}
-              />
-              <Route
-                path="/microcredential/topic-add"
-                element={<AddMicrocredentialCourseTopic />}
-              />
-              <Route
-                path="/microcredential/topic-edit/:id"
-                element={<EditMicrocredentialCourseTopic />}
-              />
-              <Route
-                path="/microcredential/topic-edit"
-                element={<EditMicrocredentialCourseTopic />}
-              />
-              <Route
-                path="/microcredential/module-topic-edit/:moduleId"
-                element={<EditMicrocredentialCourseTopic />}
-              />
-              <Route
-                path="/microcredential/edit-topic/:id"
-                element={<EditMicrocredentialCourseTopic />}
-              />
-              <Route
-                path="/IgnitoMicroCredencialDetail/AddMicrocredentialCourseTopic"
-                element={<EditMicrocredentialCourseTopic />}
-              />
-              <Route
-                path="/microcredential/faq-list"
-                element={<PlaceholderPage title="Microcredential FAQ List" />}
-              />
-              <Route
-                path="/microcredential/common-discussion"
-                element={<CommonDiscussion />}
-              />
-              <Route
-                path="/IgnitoMicroCredencialDetail/CommonDiscussion"
-                element={<CommonDiscussion />}
-              />
-              <Route
-                path="/microcredential/professor-discussion"
-                element={<PlaceholderPage title="Professor Discussion" />}
-              />
-              <Route
-                path="/microcredential/quiz"
-                element={<MicrocredentialQuizList />}
-              />
-              <Route
-                path="/microcredential/quiz-add"
-                element={<AddEditMicrocredentialQuiz />}
-              />
-              <Route
-                path="/microcredential/quiz-edit/:id"
-                element={<AddEditMicrocredentialQuiz />}
-              />
-              <Route
-                path="/microcredential/quiz-questions/:id"
-                element={<MicrocredentialQuizQuestionsPage />}
-              />
-              <Route
-                path="/DegreeQuizMVC/MainDegreeQuizList"
-                element={<MicrocredentialQuizList />}
-              />
-              <Route
-                path="/DegreeQuizMVC/DegreeQuizAddUpdate"
-                element={<AddEditMicrocredentialQuiz />}
-              />
-              <Route
-                path="/DegreeQuizMVC/DegreeQuizAddUpdate/:id"
-                element={<AddEditMicrocredentialQuiz />}
-              />
-              <Route
-                path="/DegreeQuizMVC/QuizQuestions/:id"
-                element={<MicrocredentialQuizQuestionsPage />}
-              />
-              <Route
-                path="/MicrocredentialQuizMVC/MicrocredentialQuizList"
-                element={<MicrocredentialQuizList />}
-              />
-              <Route
-                path="/MicrocredentialQuizMVC/MicrocredentialQuizAdd"
-                element={<AddEditMicrocredentialQuiz />}
-              />
-              <Route
-                path="/MicrocredentialQuizMVC/MicrocredentialQuizEdit/:id"
-                element={<AddEditMicrocredentialQuiz />}
-              />
-              <Route
-                path="/MicrocredentialQuizMVC/QuizQuestions/:id"
-                element={<MicrocredentialQuizQuestionsPage />}
-              />
-              <Route
-                path="/microcredential/quiz-result"
-                element={<MicrocredentialQuizResult />}
-              />
-              <Route
-                path="/MicrocredentialQuizMVC/MicrocredentialQuizResult"
-                element={<MicrocredentialQuizResult />}
-              />
-              {/* <Route
-              path="/microcredential/checkpoint-quiz"
-              element={<MicrocredentialCheckpointQuizList />}
-            />
-            <Route
-              path="/MicrocredentialCourseDetail/MicrocredentialCheckpointQuizList"
-              element={<MicrocredentialCheckpointQuizList />}
-            />
-            <Route
-              path="/microcredential/checkpoint-quiz-report"
-              element={<MicrocredentialCheckpointQuizReport />}
-            />
-            <Route
-              path="/MicrocredentialCourseDetail/MicrocredentialCheckpointQuizReport"
-              element={<MicrocredentialCheckpointQuizReport />}
-            /> */}
-              <Route
-                path="/microcredential/purchased-students"
-                element={<PlaceholderPage title="Purchased Students List" />}
-              />
-              <Route
-                path="/microcredential/payment-dashboard"
-                element={<PlaceholderPage title="Payment Dashboard" />}
-              />
-
-              {/* Free / Credit Courses Route */}
-              <Route
-                path="/free-credit-courses"
-                element={<PlaceholderPage title="Free / Credit Courses" />}
-              />
-
-              {/* Website Content Routes */}
-              <Route
-                path="/website/home-page-list"
-                element={<HeroSectionList />}
-              />
-              <Route
-                path="/website/trusted-logo-list"
-                element={<LogoList />}
-              />
-              <Route
-                path="/website/about-us-list"
-                element={<PlaceholderPage title="About Us List" />}
-              />
-              <Route
-                path="/website/blog-list"
-                element={<PlaceholderPage title="Blog List" />}
-              />
-              <Route
-                path="/website/testimonial-review-list"
-                element={<TestimonialList />}
-              />
-              <Route
-                path="/website/testimonial-review-add"
-                element={<AddTestimonialReview />}
-              />
-              <Route
-                path="/website/add-testimonial-review"
-                element={<AddTestimonialReview />}
-              />
-              <Route
-                path="/website/testimonial-review-edit/:id"
-                element={<EditTestimonialReview />}
-              />
-              <Route
-                path="/website/edit-testimonial-review/:id"
-                element={<EditTestimonialReview />}
-              />
-              <Route
-                path="/website/announcement-list"
-                element={<PlaceholderPage title="Announcement List" />}
-              />
-              <Route
-                path="/website/stakeholders-feedback-list"
-                element={<PlaceholderPage title="Stakeholders Feedback List" />}
-              />
-              <Route
-                path="/website/common-faq-list"
-                element={<PlaceholderPage title="Common FAQ List" />}
-              />
-
-              {/* Meetings & Calendar Routes */}
-              <Route
-                path="/zoom-meeting-list"
-                element={<ZoomMeetingList />}
-              />
-              <Route
-                path="/create-zoom-meeting"
-                element={<CreateZoomMeeting />}
-              />
-              <Route
-                path="/google-calender-list"
-                element={<GoogleCalendarList />}
-              />
-              <Route
-                path="/google-calendar-list"
-                element={<GoogleCalendarList />}
-              />
-              <Route
-                path="/create-google-calendar-event"
-                element={<CreateGoogleCalendarEvent />}
-              />
-              <Route
-                path="/google-meet-list"
-                element={<GoogleMeetList />}
-              />
-              <Route
-                path="/create-google-meet"
-                element={<CreateGoogleMeet />}
-              />
-              <Route
-                path="/edit-google-meet/:id"
-                element={<EditGoogleMeet />}
-              />
             </Route>
           </Route>
 

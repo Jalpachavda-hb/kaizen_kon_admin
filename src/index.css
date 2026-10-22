@@ -41,18 +41,23 @@ layer(base);
   --color-white: #ffffff;
   --color-black: #101828;
 
-  --color-brand-25: #f2f7ff;
-  --color-brand-50: #ecf3ff;
-  --color-brand-100: #dde9ff;
-  --color-brand-200: #c2d6ff;
-  --color-brand-300: #9cb9ff;
-  --color-brand-400: #7592ff;
-  --color-brand-500: #465fff;
-  --color-brand-600: #3641f5;
-  --color-brand-700: #2a31d8;
-  --color-brand-800: #252dae;
-  --color-brand-900: #262e89;
-  --color-brand-950: #161950;
+  --color-brand-25: #fdf5f9;
+  --color-brand-50: #faedf5;
+  --color-brand-100: #f5d8e9;
+  --color-brand-200: #ebafd3;
+  --color-brand-300: #e083bb;
+  --color-brand-400: #D85A9A;
+  --color-brand-500: #AA2D7B;
+  --color-brand-600: #932469;
+  --color-brand-700: #751a53;
+  --color-brand-800: #55355E;
+  --color-brand-900: #3f2647;
+  --color-brand-950: #291830;
+
+  --color-kaizen-pink: #D85A9A;
+  --color-kaizen-magenta: #AA2D7B;
+  --color-kaizen-plum: #55355E;
+  --color-kaizen-white: #FFFFFF;
 
   --color-blue-light-25: #f5fbff;
   --color-blue-light-50: #f0f9ff;
@@ -195,11 +200,11 @@ layer(base);
 }
 
 @utility menu-item-active {
-  @apply bg-brand-50 text-brand-500 dark:bg-brand-500/[0.12] dark:text-brand-400;
+  @apply bg-brand-50 text-brand-800 font-semibold dark:bg-brand-500/[0.18] dark:text-brand-300;
 }
 
 @utility menu-item-inactive {
-  @apply text-gray-700 hover:bg-gray-100 group-hover:text-gray-700 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-300;
+  @apply text-gray-700 hover:bg-gray-100/80 group-hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-gray-300;
 }
 
 @utility menu-item-icon {
@@ -207,7 +212,7 @@ layer(base);
 }
 
 @utility menu-item-icon-active {
-  @apply text-brand-500 dark:text-brand-400;
+  @apply text-brand-800 dark:text-brand-300;
 }
 
 @utility menu-item-icon-size {

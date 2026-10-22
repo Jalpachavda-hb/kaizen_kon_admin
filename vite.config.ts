@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import svgr from "vite-plugin-svgr";
 
-const API_TARGET_URL = "https://1ejrtfddba.execute-api.ap-south-1.amazonaws.com/default";
+
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -18,12 +18,7 @@ export default defineConfig({
     }),
   ],
   server: {
-    proxy: {
-      "/api": {
-        target: API_TARGET_URL,
-        changeOrigin: true,
-        secure: false,
-      },
-    },
-  },
+    host: true,
+    port: 5173
+  }
 });

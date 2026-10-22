@@ -1,9 +1,0 @@
-export { default as DashboardHeader } from "./DashboardHeader";
-export { default as DashboardMetrics } from "./DashboardMetrics";
-export { default as CourseDistributionChart } from "./CourseDistributionChart";
-export { default as CurriculumStructureChart } from "./CurriculumStructureChart";
-export { default as LiveSessionsChart } from "./LiveSessionsChart";
-export { default as RecentCoursesTable } from "./RecentCoursesTable";
-export { default as RecentQuizSubmissionsTable } from "./RecentQuizSubmissionsTable";
-export { default as UpcomingSessionsCard } from "./UpcomingSessionsCard";
-export { default as QuickActionHub } from "./QuickActionHub";

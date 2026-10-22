@@ -174,10 +174,10 @@ export function getAdminProfile() {
     firstName: firstName || 'Admin',
     lastName: lastName || '',
     fullName: user?.fullName || `${firstName} ${lastName}`.trim() || 'Admin User',
-    emailId: user?.emailId || user?.email || 'admin@ignitoverse.com',
+    emailId: user?.emailId || user?.email || 'user@example.com',
     mobileNumber: user?.mobileNumber || '',
     profileImage: user?.profileImage || user?.avatar || '',
-    adminRoleName: user?.adminRoleName || user?.role || 'Administrator',
+    adminRoleName: user?.adminRoleName || user?.role || 'Super Administrator',
     dashboardPath: user?.dashboardPath || '/',
     adminDashboardId: user?.adminDashboardId || 1,
     adminPermissionsList: user?.adminPermissionsList || []
@@ -199,3 +199,16 @@ export function getSavedAdminId() {
     return 1;
   }
 }
+
+export default {
+  saveAuthSession,
+  clearAuthSession,
+  getSessionLoginTime,
+  getSessionRemainingTime,
+  isSessionExpired,
+  isAuthenticated,
+  getSavedUserSession,
+  getAdminProfile,
+  getSavedAdminId,
+  SESSION_DURATION_MS
+};

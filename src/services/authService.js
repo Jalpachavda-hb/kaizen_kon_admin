@@ -1,15 +1,10 @@
 /**
  * AUTHENTICATION SERVICE
- * Connects Login UI with .NET Web API using Input and Output Parameter DTOs.
+ * Integrates Login UI with Kaizen Con Admin Login API (ApiPath.js)
  * Enforces a 2-hour session expiration rule for admin security.
  */
 
-import { apiClient } from './apiClient';
-import { buildValidateAdminCredentialInput } from '../dto/input/validateAdminCredentialInput';
-import {
-  parseValidateAdminCredentialOutput,
-  parseValidateAdminCredentialErrorOutput,
-} from '../dto/output/validateAdminCredentialOutput';
+import { adminLogin as callAdminLoginApi } from '../api/ApiPath';
 import {
   saveAuthSession,
   clearAuthSession,
@@ -22,7 +17,7 @@ import {
   SESSION_DURATION_MS
 } from './sessionManager';
 
-// Re-export session management utilities and constants for backward compatibility
+// Re-export session management utilities and constants
 export {
   SESSION_DURATION_MS,
   saveAuthSession,
@@ -46,50 +41,69 @@ export function getSessionRemainingTime() {
 }
 
 /**
- * Authenticates admin against .NET Web API (ValidateAdminCredential).
- * Endpoint: POST /api/AdminAuthenticationAPI/ValidateAdminCredential
+ * Authenticates admin against Kaizen Con Admin Login API (/api/admin_login).
  * 
  * @param {string} emailOrUsername - Admin email or username
  * @param {string} password - Admin password
- * @returns {Promise<object>} Parsed Output Parameter Object `{ success, user, token, adminId, message, error }`
+ * @returns {Promise<object>} Result Object `{ success, user, token, adminId, message, error }`
  */
 export async function validateAdminCredential(emailOrUsername, password) {
   try {
-    // 1. Prepare Input Parameter DTO
-    const inputDto = buildValidateAdminCredentialInput(emailOrUsername, password);
+    const data = await callAdminLoginApi(emailOrUsername, password);
 
-    // 2. Send Request to .NET Endpoint
-    const response = await apiClient('api/AdminAuthenticationAPI/ValidateAdminCredential', {
-      method: 'POST',
-      headers: inputDto.headers,
-      body: inputDto.body,
-      isPublic: true
+    // Extract details from backend response: { code: 200, message: "...", results: [...] }
+    const adminRecord =
+      Array.isArray(data?.results) && data.results.length > 0
+        ? data.results[0]
+        : (data?.results || data?.user || {});
+
+    const token =
+      adminRecord?.token ||
+      adminRecord?.access_token ||
+      data?.token ||
+      data?.access_token ||
+      `kaizen_auth_${Date.now()}`;
+
+    const adminUser = {
+      id: adminRecord?.id || adminRecord?.admin_id || 1,
+      adminId: adminRecord?.admin_id || adminRecord?.id || 1,
+      firstName: adminRecord?.first_name || adminRecord?.firstName || 'Kaizen',
+      lastName: adminRecord?.last_name || adminRecord?.lastName || 'Admin',
+      fullName:
+        adminRecord?.full_name ||
+        (adminRecord?.first_name ? `${adminRecord.first_name} ${adminRecord.last_name || ''}`.trim() : 'Kaizen Administrator'),
+      email: adminRecord?.email || emailOrUsername,
+      role: adminRecord?.role || adminRecord?.admin_role || 'Super Administrator',
+      profileImage: adminRecord?.profile_image || adminRecord?.avatar || '',
+    };
+
+    // Save session with 2-hour timestamp
+    saveAuthSession({
+      token,
+      user: adminUser,
+      adminId: adminUser.id,
     });
 
-    if (!response.ok && response.status !== 200) {
-      return parseValidateAdminCredentialErrorOutput(response.data, response.status);
-    }
-
-    const outputDto = parseValidateAdminCredentialOutput(response.data, response.status);
-
-    // 3. Save session token and admin info with 2-hour session timestamp on success
-    if (outputDto.success) {
-      saveAuthSession({
-        token: outputDto.token,
-        user: outputDto.user,
-        adminId: outputDto.adminId
-      });
-    }
-
-    return outputDto;
+    return {
+      success: true,
+      message: data?.message || 'Login successful',
+      user: adminUser,
+      token,
+      adminId: adminUser.id,
+      data,
+    };
   } catch (error) {
-    console.error('Error in validateAdminCredential:', error);
-    return parseValidateAdminCredentialErrorOutput({ message: error.message }, 500);
+    console.error('Login error in validateAdminCredential:', error);
+    return {
+      success: false,
+      message: error.message || 'Invalid email or password.',
+      error,
+    };
   }
 }
 
 /**
- * Backward compatibility alias for login
+ * Direct alias for login
  */
 export async function loginUser(email, password) {
   return validateAdminCredential(email, password);
@@ -130,3 +144,18 @@ export function getAdminProfile() {
 export function getSavedAdminId() {
   return checkSavedAdminId();
 }
+
+export default {
+  validateAdminCredential,
+  loginUser,
+  logoutUser,
+  isAuthenticated,
+  isSessionExpired,
+  getSessionRemainingTime,
+  getSavedUserSession,
+  getAdminProfile,
+  getSavedAdminId,
+  saveAuthSession,
+  clearAuthSession,
+  SESSION_DURATION_MS
+};
