@@ -20,6 +20,7 @@ export interface Speaker {
   speciality: string | null;
   institution: string | null;
   bio: string | null;
+  role: number | null; // 1 = speaker, 2 = chief guest, 3 = moderator
   profile_image_url: string | null;
   session_status: "scheduled" | "in_progress" | "completed" | "cancelled" | string;
   is_active: boolean;
@@ -28,6 +29,18 @@ export interface Speaker {
   updated_at: string;
 }
 
+export const SPEAKER_ROLES: Record<number, string> = {
+  1: "Speaker",
+  2: "Chief Guest",
+  3: "Moderator",
+};
+
+export const getRoleLabel = (role?: number | null): string => {
+  if (role === 2) return "Chief Guest";
+  if (role === 3) return "Moderator";
+  return "Speaker";
+};
+
 export default function SpeakersPage() {
   const [speakers, setSpeakers] = useState<Speaker[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -35,6 +48,7 @@ export default function SpeakersPage() {
 
   // Filters & Search
   const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState<string>("All"); // All | 1 | 2 | 3
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [specialityFilter, setSpecialityFilter] = useState<string>("All");
 
@@ -57,6 +71,7 @@ export default function SpeakersPage() {
   const [speciality, setSpeciality] = useState("");
   const [institution, setInstitution] = useState("");
   const [bio, setBio] = useState("");
+  const [role, setRole] = useState<number>(1); // 1 = speaker, 2 = chief guest, 3 = moderator
   const [sessionStatus, setSessionStatus] = useState<
     "scheduled" | "in_progress" | "completed" | "cancelled"
   >("scheduled");
@@ -113,17 +128,23 @@ export default function SpeakersPage() {
   const filteredSpeakers = useMemo(() => {
     return speakers.filter((s) => {
       const fullName = `${s.first_name || ""} ${s.last_name || ""}`.toLowerCase();
+      const roleText = getRoleLabel(s.role).toLowerCase();
       const term = search.toLowerCase().trim();
 
       const matchesSearch =
         !term ||
         fullName.includes(term) ||
+        roleText.includes(term) ||
         (s.email && s.email.toLowerCase().includes(term)) ||
         (s.phone && s.phone.includes(term)) ||
         (s.designation && s.designation.toLowerCase().includes(term)) ||
         (s.speciality && s.speciality.toLowerCase().includes(term)) ||
         (s.institution && s.institution.toLowerCase().includes(term)) ||
         (s.bio && s.bio.toLowerCase().includes(term));
+
+      const matchesRole =
+        roleFilter === "All" ||
+        String(s.role ?? 1) === roleFilter;
 
       const matchesStatus =
         statusFilter === "All" ||
@@ -132,23 +153,19 @@ export default function SpeakersPage() {
       const matchesSpeciality =
         specialityFilter === "All" || s.speciality === specialityFilter;
 
-      return matchesSearch && matchesStatus && matchesSpeciality;
+      return matchesSearch && matchesRole && matchesStatus && matchesSpeciality;
     });
-  }, [speakers, search, statusFilter, specialityFilter]);
+  }, [speakers, search, roleFilter, statusFilter, specialityFilter]);
 
   // Summary Metrics
   const metrics = useMemo(() => {
     const total = speakers.length;
-    const scheduled = speakers.filter(
-      (s) => s.session_status?.toLowerCase() === "scheduled"
-    ).length;
-    const inProgress = speakers.filter(
-      (s) => s.session_status?.toLowerCase() === "in_progress"
-    ).length;
+    const speakerCount = speakers.filter((s) => (s.role ?? 1) === 1).length;
+    const chiefGuestCount = speakers.filter((s) => s.role === 2).length;
+    const moderatorCount = speakers.filter((s) => s.role === 3).length;
     const active = speakers.filter((s) => s.is_active).length;
-    const institutions = new Set(speakers.map((s) => s.institution).filter(Boolean)).size;
 
-    return { total, scheduled, inProgress, active, institutions };
+    return { total, speakerCount, chiefGuestCount, moderatorCount, active };
   }, [speakers]);
 
   // Reset Form
@@ -162,6 +179,7 @@ export default function SpeakersPage() {
     setSpeciality("");
     setInstitution("");
     setBio("");
+    setRole(1); // Default to Speaker (1)
     setSessionStatus("scheduled");
     setIsActive(true);
     setImageFile(null);
@@ -191,6 +209,7 @@ export default function SpeakersPage() {
     setSpeciality(speaker.speciality || "");
     setInstitution(speaker.institution || "");
     setBio(speaker.bio || "");
+    setRole(speaker.role ? Number(speaker.role) : 1);
     setSessionStatus((speaker.session_status as any) || "scheduled");
     setIsActive(Boolean(speaker.is_active));
     if (speaker.profile_image_url) {
@@ -211,6 +230,7 @@ export default function SpeakersPage() {
         setSpeciality(fresh.speciality || "");
         setInstitution(fresh.institution || "");
         setBio(fresh.bio || "");
+        setRole(fresh.role ? Number(fresh.role) : 1);
         setSessionStatus((fresh.session_status as any) || "scheduled");
         setIsActive(Boolean(fresh.is_active));
         if (fresh.profile_image_url) {
@@ -271,6 +291,7 @@ export default function SpeakersPage() {
       formData.append("last_name", lastName.trim());
       formData.append("email", email.trim());
       formData.append("designation", designation.trim());
+      formData.append("role", String(role)); // Pass role as integer: 1=Speaker, 2=Chief Guest, 3=Moderator
 
       if (phone.trim()) formData.append("phone", phone.trim());
       if (speciality.trim()) formData.append("speciality", speciality.trim());
@@ -289,10 +310,10 @@ export default function SpeakersPage() {
       if (res && (res.code === 200 || res.code === 201 || res.results)) {
         await Swal.fire({
           icon: "success",
-          title: editingSpeaker ? "Speaker Updated!" : "Speaker Registered!",
+          title: editingSpeaker ? "Profile Updated!" : "Profile Registered!",
           text: editingSpeaker
-            ? `Speaker "${firstName} ${lastName}" has been successfully updated.`
-            : `Speaker "${firstName} ${lastName}" has been successfully added.`,
+            ? `${getRoleLabel(role)} "${firstName} ${lastName}" has been successfully updated.`
+            : `${getRoleLabel(role)} "${firstName} ${lastName}" has been successfully registered.`,
           confirmButtonColor: "#AA2D7B",
           timer: 2000,
           showConfirmButton: false,
@@ -308,8 +329,8 @@ export default function SpeakersPage() {
       console.error("Save speaker error:", err);
       Swal.fire({
         icon: "error",
-        title: "Failed to Save Speaker",
-        text: err?.message || "An error occurred while saving speaker details.",
+        title: "Failed to Save",
+        text: err?.message || "An error occurred while saving details.",
         confirmButtonColor: "#AA2D7B",
       });
     } finally {
@@ -320,8 +341,8 @@ export default function SpeakersPage() {
   // Delete Speaker via DELETE /api/speakers/{speaker_id}
   const handleDeleteSpeaker = async (speaker: Speaker) => {
     const result = await Swal.fire({
-      title: "Delete Speaker?",
-      text: `Are you sure you want to delete "${speaker.first_name} ${speaker.last_name}"? This action cannot be undone.`,
+      title: "Delete Faculty?",
+      text: `Are you sure you want to delete ${getRoleLabel(speaker.role)} "${speaker.first_name} ${speaker.last_name}"? This action cannot be undone.`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#AA2D7B",
@@ -346,7 +367,7 @@ export default function SpeakersPage() {
       await deleteSpeaker(speaker.id);
       await Swal.fire({
         title: "Deleted!",
-        text: `Speaker "${speaker.first_name} ${speaker.last_name}" has been removed.`,
+        text: `${getRoleLabel(speaker.role)} "${speaker.first_name} ${speaker.last_name}" has been removed.`,
         icon: "success",
         confirmButtonColor: "#AA2D7B",
         timer: 1800,
@@ -373,6 +394,7 @@ export default function SpeakersPage() {
       "Speaker UUID",
       "First Name",
       "Last Name",
+      "Role",
       "Email",
       "Phone",
       "Designation",
@@ -388,6 +410,7 @@ export default function SpeakersPage() {
       `"${s.speaker_id || ""}"`,
       `"${s.first_name || ""}"`,
       `"${s.last_name || ""}"`,
+      `"${getRoleLabel(s.role)}"`,
       `"${s.email || ""}"`,
       `"${s.phone || ""}"`,
       `"${s.designation || ""}"`,
@@ -415,17 +438,29 @@ export default function SpeakersPage() {
     <>
       <PageMeta
         title="Speakers Management | Kaizen Con 2027"
-        description="Manage conference keynote speakers, guest lecturers, and medical specialists."
+        description="Manage conference keynote speakers, chief guests, moderators, and medical specialists."
       />
 
       <AdminPageContainer
-        title="Speakers"
-        subtitle="Manage conference keynote speakers, guest lecturers, panel specialists, and session status."
+        title="Speakers & Faculty"
+        subtitle="Manage conference speakers, chief guests, session moderators, hall assignments, and profiles."
         searchValue={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Search speakers by name, email, designation, institution, speciality..."
+        searchPlaceholder="Search by name, role, email, designation, institution, speciality..."
         actionButton={
           <div className="flex items-center flex-wrap gap-2">
+            {/* Role Filter (1 = Speaker, 2 = Chief Guest, 3 = Moderator) */}
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="px-2.5 py-1.5 text-xs font-medium border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-none focus:border-[#AA2D7B]"
+            >
+              <option value="All">All Roles</option>
+              <option value="1">Speakers (Role 1)</option>
+              <option value="2">Chief Guests (Role 2)</option>
+              <option value="3">Moderators (Role 3)</option>
+            </select>
+
             {/* Status Filter */}
             <select
               value={statusFilter}
@@ -484,7 +519,7 @@ export default function SpeakersPage() {
               Refresh
             </button>
 
-            {/* Add Speaker */}
+            {/* Add Speaker / Faculty Button */}
             <button
               onClick={handleOpenAddModal}
               className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-[#AA2D7B] hover:bg-[#D85A9A] rounded-lg shadow-xs transition-colors cursor-pointer"
@@ -493,7 +528,7 @@ export default function SpeakersPage() {
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
-              Add Speaker
+              Add Speaker / Guest
             </button>
           </div>
         }
@@ -511,11 +546,11 @@ export default function SpeakersPage() {
           </div>
         )}
 
-        {/* Metrics Overview Cards */}
+        {/* Metrics Overview Cards with Role Breakdown */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
           <div className="p-3.5 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-850 rounded-xl border border-gray-200/80 dark:border-gray-700 shadow-2xs">
             <div className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-              Total Speakers
+              Total Faculty
             </div>
             <div className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
               {metrics.total}
@@ -523,26 +558,26 @@ export default function SpeakersPage() {
           </div>
           <div className="p-3.5 bg-gradient-to-br from-[#faedf5]/60 to-white dark:from-purple-950/20 dark:to-gray-850 rounded-xl border border-[#AA2D7B]/20 dark:border-purple-900/40 shadow-2xs">
             <div className="text-[11px] font-semibold uppercase tracking-wider text-[#AA2D7B] dark:text-pink-400">
-              Scheduled
+              Speakers (Role 1)
             </div>
             <div className="text-2xl font-bold text-[#AA2D7B] dark:text-pink-300 mt-1">
-              {metrics.scheduled}
+              {metrics.speakerCount}
             </div>
           </div>
-          <div className="p-3.5 bg-gradient-to-br from-emerald-50/60 to-white dark:from-emerald-950/20 dark:to-gray-850 rounded-xl border border-emerald-200 dark:border-emerald-900/40 shadow-2xs">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-              Active Speakers
+          <div className="p-3.5 bg-gradient-to-br from-amber-50/60 to-white dark:from-amber-950/20 dark:to-gray-850 rounded-xl border border-amber-200 dark:border-amber-900/40 shadow-2xs">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+              Chief Guests (Role 2)
             </div>
-            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-300 mt-1">
-              {metrics.active}
+            <div className="text-2xl font-bold text-amber-600 dark:text-amber-300 mt-1">
+              {metrics.chiefGuestCount}
             </div>
           </div>
           <div className="p-3.5 bg-gradient-to-br from-blue-50/60 to-white dark:from-blue-950/20 dark:to-gray-850 rounded-xl border border-blue-200 dark:border-blue-900/40 shadow-2xs">
             <div className="text-[11px] font-semibold uppercase tracking-wider text-blue-700 dark:text-blue-400">
-              Institutions
+              Moderators (Role 3)
             </div>
             <div className="text-2xl font-bold text-blue-600 dark:text-blue-300 mt-1">
-              {metrics.institutions}
+              {metrics.moderatorCount}
             </div>
           </div>
         </div>
@@ -554,7 +589,7 @@ export default function SpeakersPage() {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
             </svg>
-            <span>Loading speakers from backend...</span>
+            <span>Loading speakers & faculty from backend...</span>
           </div>
         )}
 
@@ -564,18 +599,19 @@ export default function SpeakersPage() {
             <svg className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
-            <p className="font-medium text-gray-600 dark:text-gray-300">No speakers found matching your search.</p>
-            <p className="text-xs text-gray-400 mt-1">Try resetting the filters or add a new speaker.</p>
+            <p className="font-medium text-gray-600 dark:text-gray-300">No speakers or faculty found matching your search.</p>
+            <p className="text-xs text-gray-400 mt-1">Try resetting the role or search filters, or register a new speaker.</p>
           </div>
         )}
 
-        {/* Speakers Table */}
+        {/* Speakers Table with Role column */}
         {!loading && filteredSpeakers.length > 0 && (
           <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wider text-[11px] bg-gray-50/70 dark:bg-gray-800/60">
-                  <th className="py-3 px-4">Speaker</th>
+                  <th className="py-3 px-4">Faculty / Name</th>
+                  <th className="py-3 px-4">Role</th>
                   <th className="py-3 px-4">Designation & Institution</th>
                   <th className="py-3 px-4">Speciality</th>
                   <th className="py-3 px-4">Contact</th>
@@ -588,6 +624,7 @@ export default function SpeakersPage() {
                 {filteredSpeakers.map((speaker) => {
                   const imageUrl = getFullImageUrl(speaker.profile_image_url);
                   const initials = `${speaker.first_name?.[0] || ""}${speaker.last_name?.[0] || ""}`.toUpperCase();
+                  const roleNum = speaker.role ?? 1;
 
                   return (
                     <tr
@@ -622,6 +659,21 @@ export default function SpeakersPage() {
                         </div>
                       </td>
 
+                      {/* Role Badge (1 = Speaker, 2 = Chief Guest, 3 = Moderator) */}
+                      <td className="py-3.5 px-4">
+                        <span
+                          className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                            roleNum === 2
+                              ? "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800"
+                              : roleNum === 3
+                              ? "bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800"
+                              : "bg-[#faedf5] text-[#AA2D7B] border border-[#AA2D7B]/20 dark:bg-pink-950/40 dark:text-pink-300 dark:border-pink-800"
+                          }`}
+                        >
+                          {getRoleLabel(speaker.role)}
+                        </span>
+                      </td>
+
                       {/* Designation & Institution */}
                       <td className="py-3.5 px-4">
                         <div className="font-medium text-gray-900 dark:text-gray-100">
@@ -635,7 +687,7 @@ export default function SpeakersPage() {
                       {/* Speciality */}
                       <td className="py-3.5 px-4">
                         {speaker.speciality ? (
-                          <span className="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-[#faedf5] text-[#AA2D7B] border border-[#AA2D7B]/20">
+                          <span className="inline-block px-2.5 py-0.5  text-[11px] font-medium">
                             {speaker.speciality}
                           </span>
                         ) : (
@@ -650,7 +702,7 @@ export default function SpeakersPage() {
                         </div>
                         {speaker.phone && (
                           <div className="text-[11px] text-gray-500 dark:text-gray-400">
-                            📞 {speaker.phone}
+                            {speaker.phone}
                           </div>
                         )}
                       </td>
@@ -696,8 +748,8 @@ export default function SpeakersPage() {
                           {/* View Button */}
                           <button
                             onClick={() => setViewingSpeaker(speaker)}
-                            className="px-2.5 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 rounded-md transition-colors"
-                            title="View Speaker Details"
+                            className="px-2.5 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 rounded-md transition-colors cursor-pointer"
+                            title="View Details"
                           >
                             View
                           </button>
@@ -705,7 +757,7 @@ export default function SpeakersPage() {
                           {/* Edit Button */}
                           <button
                             onClick={() => handleOpenEditModal(speaker)}
-                            className="px-2.5 py-1 text-xs font-semibold text-[#AA2D7B] hover:text-[#55355E] bg-[#faedf5] hover:bg-[#faedf5]/80 rounded-md transition-colors"
+                            className="px-2.5 py-1 text-xs font-semibold text-[#AA2D7B] hover:text-[#55355E] bg-[#faedf5] hover:bg-[#faedf5]/80 rounded-md transition-colors cursor-pointer"
                             title="Edit Speaker via GET ?id="
                           >
                             Edit
@@ -715,7 +767,7 @@ export default function SpeakersPage() {
                           <button
                             onClick={() => handleDeleteSpeaker(speaker)}
                             disabled={deletingId === speaker.id}
-                            className="px-2.5 py-1 text-xs font-medium text-red-600 hover:text-red-800 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 rounded-md transition-colors disabled:opacity-50"
+                            className="px-2.5 py-1 text-xs font-medium text-red-600 hover:text-red-800 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 rounded-md transition-colors disabled:opacity-50 cursor-pointer"
                             title="Delete Speaker"
                           >
                             {deletingId === speaker.id ? "..." : "Delete"}
@@ -735,21 +787,21 @@ export default function SpeakersPage() {
           VIEW SPEAKER DETAILS MODAL
       ========================================================================= */}
       {viewingSpeaker && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-fadeIn">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-[#faedf5]/30">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden animate-fadeIn my-auto">
+            <div className="flex items-center justify-between px-5 py-3.5 sm:px-6 sm:py-4 border-b border-gray-200 dark:border-gray-800 bg-[#faedf5]/30 shrink-0">
               <h3 className="text-base font-bold text-gray-900 dark:text-white">
-                Speaker Profile
+                Faculty Profile Details
               </h3>
               <button
                 onClick={() => setViewingSpeaker(null)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-base"
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-base cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <div className="p-6 space-y-4 text-xs">
+            <div className="p-5 sm:p-6 space-y-4 text-xs overflow-y-auto flex-1 min-h-0">
               <div className="flex items-center gap-4">
                 {getFullImageUrl(viewingSpeaker.profile_image_url) ? (
                   <img
@@ -764,9 +816,22 @@ export default function SpeakersPage() {
                   </div>
                 )}
                 <div>
-                  <h4 className="text-base font-bold text-gray-900 dark:text-white">
-                    {viewingSpeaker.first_name} {viewingSpeaker.last_name}
-                  </h4>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-base font-bold text-gray-900 dark:text-white">
+                      {viewingSpeaker.first_name} {viewingSpeaker.last_name}
+                    </h4>
+                    <span
+                      className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                        viewingSpeaker.role === 2
+                          ? "bg-amber-50 text-amber-700 border border-amber-200"
+                          : viewingSpeaker.role === 3
+                          ? "bg-blue-50 text-blue-700 border border-blue-200"
+                          : "bg-[#faedf5] text-[#AA2D7B] border border-[#AA2D7B]/20"
+                      }`}
+                    >
+                      {getRoleLabel(viewingSpeaker.role)}
+                    </span>
+                  </div>
                   <div className="text-xs text-gray-500 font-medium mt-0.5">
                     {viewingSpeaker.designation}
                   </div>
@@ -777,6 +842,12 @@ export default function SpeakersPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100 dark:border-gray-800">
+                <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                  <div className="text-gray-400 text-[10px] font-semibold uppercase">Conference Role</div>
+                  <div className="font-semibold text-gray-800 dark:text-gray-200 mt-0.5">
+                    {getRoleLabel(viewingSpeaker.role)} (Role {viewingSpeaker.role ?? 1})
+                  </div>
+                </div>
                 <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                   <div className="text-gray-400 text-[10px] font-semibold uppercase">Speciality</div>
                   <div className="font-semibold text-gray-800 dark:text-gray-200 mt-0.5">
@@ -795,7 +866,7 @@ export default function SpeakersPage() {
                     {viewingSpeaker.email}
                   </div>
                 </div>
-                <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg col-span-2">
                   <div className="text-gray-400 text-[10px] font-semibold uppercase">Phone</div>
                   <div className="font-semibold text-gray-800 dark:text-gray-200 mt-0.5 font-mono text-[11px]">
                     {viewingSpeaker.phone || "—"}
@@ -818,7 +889,7 @@ export default function SpeakersPage() {
                 <button
                   type="button"
                   onClick={() => setViewingSpeaker(null)}
-                  className="px-4 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold"
+                  className="px-4 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold cursor-pointer"
                 >
                   Close
                 </button>
@@ -830,23 +901,22 @@ export default function SpeakersPage() {
 
       {/* =========================================================================
           ADD / EDIT SPEAKER MODAL
-          - If editingSpeaker is set: sends id and updates existing speaker
-          - If editingSpeaker is null: does not send id and creates a new speaker
+          - Includes Role selection: 1 = Speaker, 2 = Chief Guest, 3 = Moderator
       ========================================================================= */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl w-full max-w-xl max-h-[92vh] overflow-hidden flex flex-col animate-fadeIn">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl w-full max-w-xl max-h-[92vh] sm:max-h-[88vh] overflow-hidden flex flex-col animate-fadeIn my-auto">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-[#faedf5]/30">
+            <div className="flex items-center justify-between px-5 py-3 sm:px-6 sm:py-3.5 border-b border-gray-200 dark:border-gray-800 bg-[#faedf5]/30 shrink-0">
               <div>
                 <h3 className="text-sm font-bold text-gray-900 dark:text-white">
                   {editingSpeaker
-                    ? `Edit Speaker: ${firstName} ${lastName}`
-                    : "Register New Speaker"}
+                    ? `Edit Faculty: ${firstName} ${lastName}`
+                    : "Register New Speaker / Faculty"}
                 </h3>
                 <p className="text-[11px] text-gray-500">
                   {editingSpeaker
-                    ? `Updating Speaker ID #${editingSpeaker.id} via POST /api/speakers`
+                    ? `Updating ID #${editingSpeaker.id} via POST /api/speakers`
                     : "Creates a new conference speaker record via POST /api/speakers"}
                 </p>
               </div>
@@ -855,7 +925,7 @@ export default function SpeakersPage() {
                   setIsModalOpen(false);
                   resetForm();
                 }}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-base"
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 text-base cursor-pointer"
               >
                 ✕
               </button>
@@ -868,10 +938,11 @@ export default function SpeakersPage() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                 </svg>
-                <span>Fetching speaker details from API...</span>
+                <span>Fetching details from API...</span>
               </div>
             ) : (
-              <form onSubmit={handleSaveSpeaker} className="p-6 overflow-y-auto space-y-4 text-xs flex-1">
+              <form onSubmit={handleSaveSpeaker} className="flex flex-col flex-1 min-h-0 overflow-hidden text-xs">
+                <div className="p-4 sm:p-6 overflow-y-auto space-y-3.5 sm:space-y-4 flex-1">
                 {/* Profile Image Preview & Upload */}
                 <div className="p-3.5 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center gap-4">
                   <div className="relative shrink-0">
@@ -935,6 +1006,42 @@ export default function SpeakersPage() {
                   </div>
                 </div>
 
+                {/* Role & Session Status */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                      Conference Role <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      value={role}
+                      onChange={(e) => setRole(Number(e.target.value))}
+                      className="w-full px-3 py-2 font-medium border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:border-[#AA2D7B]"
+                    >
+                      <option value={1}>1 - Speaker</option>
+                      <option value={2}>2 - Chief Guest</option>
+                      <option value={3}>3 - Moderator</option>
+                    </select>
+                    <p className="text-[10px] text-gray-400 mt-0.5">
+                      Sends integer {role} to backend API.
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                      Session Status
+                    </label>
+                    <select
+                      value={sessionStatus}
+                      onChange={(e) => setSessionStatus(e.target.value as any)}
+                      className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:border-[#AA2D7B]"
+                    >
+                      <option value="scheduled">Scheduled</option>
+                      <option value="in_progress">In Progress</option>
+                      <option value="completed">Completed</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                </div>
+
                 {/* Email & Phone */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -993,41 +1100,24 @@ export default function SpeakersPage() {
                   </div>
                 </div>
 
-                {/* Institution & Session Status */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                      Institution / Hospital
-                    </label>
-                    <input
-                      type="text"
-                      value={institution}
-                      onChange={(e) => setInstitution(e.target.value)}
-                      placeholder="e.g. RK Hospital"
-                      className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:border-[#AA2D7B]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                      Session Status
-                    </label>
-                    <select
-                      value={sessionStatus}
-                      onChange={(e) => setSessionStatus(e.target.value as any)}
-                      className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:border-[#AA2D7B]"
-                    >
-                      <option value="scheduled">Scheduled</option>
-                      <option value="in_progress">In Progress</option>
-                      <option value="completed">Completed</option>
-                      <option value="cancelled">Cancelled</option>
-                    </select>
-                  </div>
+                {/* Institution */}
+                <div>
+                  <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                    Institution / Hospital
+                  </label>
+                  <input
+                    type="text"
+                    value={institution}
+                    onChange={(e) => setInstitution(e.target.value)}
+                    placeholder="e.g. RK Hospital"
+                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:border-[#AA2D7B]"
+                  />
                 </div>
 
                 {/* Bio */}
                 <div>
                   <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                    Speaker Bio / Profile Details
+                    Faculty Bio / Profile Details
                   </label>
                   <textarea
                     rows={3}
@@ -1045,18 +1135,20 @@ export default function SpeakersPage() {
                     id="isActiveSpeaker"
                     checked={isActive}
                     onChange={(e) => setIsActive(e.target.checked)}
-                    className="w-4 h-4 text-[#AA2D7B] border-gray-300 rounded focus:ring-[#AA2D7B]"
+                    className="w-4 h-4 text-[#AA2D7B] border-gray-300 rounded focus:ring-[#AA2D7B] cursor-pointer"
                   />
                   <label
                     htmlFor="isActiveSpeaker"
                     className="font-medium text-gray-700 dark:text-gray-300 cursor-pointer"
                   >
-                    Speaker is Active on Portal
+                    Faculty is Active on Portal
                   </label>
                 </div>
 
+                </div>
+
                 {/* Actions Footer */}
-                <div className="flex justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-800">
+                <div className="flex justify-end gap-2 px-5 py-3 sm:px-6 sm:py-3.5 border-t border-gray-200 dark:border-gray-800 shrink-0 bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur-xs">
                   <button
                     type="button"
                     disabled={isSubmitting}
@@ -1064,14 +1156,14 @@ export default function SpeakersPage() {
                       setIsModalOpen(false);
                       resetForm();
                     }}
-                    className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 font-medium"
+                    className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 font-medium cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#AA2D7B] hover:bg-[#D85A9A] text-white font-semibold transition-colors disabled:opacity-50"
+                    className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-[#AA2D7B] hover:bg-[#D85A9A] text-white font-semibold transition-colors disabled:opacity-50 cursor-pointer"
                   >
                     {isSubmitting && (
                       <svg className="w-3.5 h-3.5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
@@ -1079,7 +1171,7 @@ export default function SpeakersPage() {
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                       </svg>
                     )}
-                    {editingSpeaker ? "Save Changes" : "Register Speaker"}
+                    {editingSpeaker ? "Save Changes" : "Register Faculty"}
                   </button>
                 </div>
               </form>

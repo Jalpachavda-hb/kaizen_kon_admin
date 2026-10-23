@@ -271,122 +271,124 @@ export default function UsersPage() {
 
       {/* Add / Edit User Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-fadeIn">
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-200 dark:border-gray-800 bg-[#faedf5]/30">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-2xl w-full max-w-md max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden animate-fadeIn my-auto">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-200 dark:border-gray-800 bg-[#faedf5]/30 shrink-0">
               <h3 className="text-sm font-bold text-gray-900 dark:text-white">
                 {editingUser ? "Edit User Account" : "Add New System User"}
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 text-sm"
+                className="text-gray-400 hover:text-gray-600 text-sm cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleSaveUser} className="p-5 space-y-3.5 text-xs">
-              <div>
-                <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                  Full Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Dr. John Doe"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#AA2D7B]"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                  Email Address *
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@kaizencon.com"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#AA2D7B]"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                  System Role
-                </label>
-                <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#AA2D7B]"
-                >
-                  <option value="Super Administrator">Super Administrator</option>
-                  <option value="Conference Director">Conference Director</option>
-                  <option value="Conference Manager">Conference Manager</option>
-                  <option value="Speaker Program Coordinator">Speaker Program Coordinator</option>
-                  <option value="Staff & Operations">Staff & Operations</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                  Assign Authorization Group
-                </label>
-                <select
-                  value={group}
-                  onChange={(e) => setGroup(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#AA2D7B]"
-                >
-                  <option value="Administrators">Administrators</option>
-                  <option value="Conference Managers">Conference Managers</option>
-                  <option value="Speaker Liaisons">Speaker Liaisons</option>
-                  <option value="Reviewers & Program Committee">Reviewers & Program Committee</option>
-                  <option value="Staff & Operations">Staff & Operations</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                  Status
-                </label>
-                <div className="flex items-center gap-4">
-                  <label className="flex items-center gap-1.5 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="status"
-                      checked={status === "Active"}
-                      onChange={() => setStatus("Active")}
-                      className="text-[#AA2D7B]"
-                    />
-                    <span>Active</span>
+            <form onSubmit={handleSaveUser} className="flex flex-col flex-1 min-h-0 overflow-hidden text-xs">
+              <div className="p-4 sm:p-5 space-y-3.5 overflow-y-auto flex-1">
+                <div>
+                  <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                    Full Name *
                   </label>
-                  <label className="flex items-center gap-1.5 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="status"
-                      checked={status === "Inactive"}
-                      onChange={() => setStatus("Inactive")}
-                      className="text-[#AA2D7B]"
-                    />
-                    <span>Inactive</span>
+                  <input
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. Dr. John Doe"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#AA2D7B]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                    Email Address *
                   </label>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@kaizencon.com"
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#AA2D7B]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                    System Role
+                  </label>
+                  <select
+                    value={role}
+                    onChange={(e) => setRole(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#AA2D7B]"
+                  >
+                    <option value="Super Administrator">Super Administrator</option>
+                    <option value="Conference Director">Conference Director</option>
+                    <option value="Conference Manager">Conference Manager</option>
+                    <option value="Speaker Program Coordinator">Speaker Program Coordinator</option>
+                    <option value="Staff & Operations">Staff & Operations</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                    Assign Authorization Group
+                  </label>
+                  <select
+                    value={group}
+                    onChange={(e) => setGroup(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#AA2D7B]"
+                  >
+                    <option value="Administrators">Administrators</option>
+                    <option value="Conference Managers">Conference Managers</option>
+                    <option value="Speaker Liaisons">Speaker Liaisons</option>
+                    <option value="Reviewers & Program Committee">Reviewers & Program Committee</option>
+                    <option value="Staff & Operations">Staff & Operations</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                    Status
+                  </label>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="status"
+                        checked={status === "Active"}
+                        onChange={() => setStatus("Active")}
+                        className="text-[#AA2D7B]"
+                      />
+                      <span>Active</span>
+                    </label>
+                    <label className="flex items-center gap-1.5 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="status"
+                        checked={status === "Inactive"}
+                        onChange={() => setStatus("Inactive")}
+                        className="text-[#AA2D7B]"
+                      />
+                      <span>Inactive</span>
+                    </label>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-gray-200">
+              <div className="flex justify-end gap-2 px-5 py-3 border-t border-gray-200 shrink-0 bg-gray-50/80 dark:bg-gray-800/80">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100"
+                  className="px-3.5 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded-lg bg-[#AA2D7B] hover:bg-[#D85A9A] text-white font-semibold transition-colors"
+                  className="px-4 py-1.5 rounded-lg bg-[#AA2D7B] hover:bg-[#D85A9A] text-white font-semibold transition-colors cursor-pointer"
                 >
                   {editingUser ? "Save Changes" : "Create User"}
                 </button>

@@ -31,10 +31,10 @@ const AppHeader: React.FC = () => {
         page: "Users",
       };
     }
-    if (path.includes("speaker")) {
+    if (path.includes("faculty") || path.includes("speaker")) {
       return {
         section: "Conference",
-        page: "Speakers",
+        page: "Faculty",
       };
     }
     if (path.includes("session")) {
@@ -47,6 +47,36 @@ const AppHeader: React.FC = () => {
       return {
         section: "Conference",
         page: "Topics",
+      };
+    }
+    if (path.includes("delegate")) {
+      return {
+        section: "Conference",
+        page: "Delegates",
+      };
+    }
+    if (path.includes("send-to-email")) {
+      return {
+        section: "Agent Settings",
+        page: "Send Email",
+      };
+    }
+    if (path.includes("campaign")) {
+      return {
+        section: "Agent Settings",
+        page: "Campaigns",
+      };
+    }
+    if (path.includes("template")) {
+      return {
+        section: "Agent Settings",
+        page: "Templates",
+      };
+    }
+    if (path.includes("poll")) {
+      return {
+        section: "Conference Features",
+        page: "Polls",
       };
     }
     return {

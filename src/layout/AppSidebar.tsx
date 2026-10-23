@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React from "react";
 import { Link, useLocation } from "react-router";
 import { useSidebar } from "../context/SidebarContext";
 import {
@@ -6,20 +6,25 @@ import {
   SpeakersIcon,
   SessionsIcon,
   DelegatesIcon,
-  SearchMiniIcon,
   SendEmailIcon,
   CampaignsIcon,
+  TemplatesIcon,
+  WhatsAppIcon,
+  PollsIcon,
 } from "../icons/conferenceIcons";
+
+export interface NavItem {
+  name: string;
+  path: string;
+  aliases?: string[];
+  icon: React.ReactNode;
+  badge?: string | number;
+  disabled?: boolean;
+}
 
 export interface NavSection {
   title: string;
-  items: {
-    name: string;
-    path: string;
-    aliases?: string[];
-    icon: React.ReactNode;
-    badge?: string | number;
-  }[];
+  items: NavItem[];
 }
 
 const conferenceNavSections: NavSection[] = [
@@ -38,9 +43,9 @@ const conferenceNavSections: NavSection[] = [
     title: "Conference",
     items: [
       {
-        name: "Speakers",
-        path: "/speakers",
-        aliases: ["/conference/speakers"],
+        name: "Faculty",
+        path: "/faculty",
+        aliases: ["/conference/faculty"],
         icon: <SpeakersIcon className="w-5 h-5" />,
       },
       {
@@ -72,6 +77,30 @@ const conferenceNavSections: NavSection[] = [
         aliases: ["/conference/campaigns", "/agent-settings/campaigns"],
         icon: <CampaignsIcon className="w-5 h-5" />,
       },
+       {
+        name: "Templates",
+        path: "/templates",
+        aliases: ["/conference/templates", "/agent-settings/templates"],
+        icon: <TemplatesIcon className="w-5 h-5" />,
+      },
+      {
+        name: "WhatsApp",
+        path: "#",
+        icon: <WhatsAppIcon className="w-5 h-5 text-[#25D366]" />,
+        badge: "Coming Soon",
+        disabled: true,
+      },
+    ],
+  },
+  {
+    title: "Conference Features",
+    items: [
+      {
+        name: "Polls",
+        path: "/polls",
+        aliases: ["/conference/polls", "/agent-settings/polls"],
+        icon: <PollsIcon className="w-5 h-5" />,
+      },
     ],
   },
 ];
@@ -85,7 +114,6 @@ const AppSidebar: React.FC = () => {
     toggleMobileSidebar,
   } = useSidebar();
   const location = useLocation();
-  const [searchFilter, setSearchFilter] = useState("");
 
   const isCurrentActive = (path: string, aliases?: string[]) => {
     if (location.pathname === path) return true;
@@ -115,15 +143,15 @@ const AppSidebar: React.FC = () => {
           className="flex items-center justify-center w-full"
         >
           <div
-            className={`py-2 px-3 rounded-xl border border-gray-200/90 dark:border-gray-700/80 bg-white dark:bg-gray-800 flex items-center justify-center shadow-xs transition-all ${
+            className={`py-2 px-3   bg-white dark:bg-gray-800 flex items-center justify-center shadow-xs transition-all ${
               showFullSidebar ? "w-full max-w-[240px]" : "w-12 h-12 p-1"
             }`}
           >
             <img
               src="/logokaizecon.png"
-              alt="Kaizen Con 2027 Logo"
+              alt="Kaizen Con 2027 Logo"  
               className={`${
-                showFullSidebar ? "h-20 max-h-24" : "h-9 max-h-9"
+                showFullSidebar ? "h-20 max-h-20" : "h-8 max-h-8"
               } w-auto max-w-full object-contain transition-all`}
               onError={(e) => {
                 // fallback to text if image fails
@@ -137,39 +165,10 @@ const AppSidebar: React.FC = () => {
         </Link>
       </div>
 
-      {/* Sidebar Search Bar */}
-      {showFullSidebar && (
-        <div className="px-3.5 pt-3.5 pb-1">
-          <div className="relative flex items-center">
-            <span className="absolute left-2.5 text-gray-400 pointer-events-none">
-              <SearchMiniIcon className="w-4 h-4" />
-            </span>
-            <input
-              type="text"
-              placeholder="Search apps and model..."
-              value={searchFilter}
-              onChange={(e) => setSearchFilter(e.target.value)}
-              className="w-full pl-8 pr-8 py-2 text-sm bg-white dark:bg-gray-800/80 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-lg placeholder-gray-400 focus:outline-none focus:border-[#AA2D7B] focus:ring-1 focus:ring-[#AA2D7B] transition-all"
-            />
-            <span className="absolute right-2.5 px-1.5 py-0.5 text-[10px] font-mono text-gray-400 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded">
-              ^K
-            </span>
-          </div>
-        </div>
-      )}
-
       {/* Navigation Sections */}
-      <div className="flex-1 overflow-y-auto px-3.5 py-2.5 no-scrollbar">
+      <div className="flex-1 overflow-y-auto px-3.5 py-4 no-scrollbar">
         <nav className="flex flex-col gap-3.5">
           {conferenceNavSections.map((section, sIndex) => {
-            const filteredItems = section.items.filter((item) =>
-              item.name.toLowerCase().includes(searchFilter.toLowerCase().trim())
-            );
-
-            if (filteredItems.length === 0 && searchFilter.trim() !== "") {
-              return null;
-            }
-
             return (
               <div key={section.title}>
                 {sIndex > 0 && (
@@ -183,7 +182,35 @@ const AppSidebar: React.FC = () => {
                 )}
 
                 <ul className="flex flex-col gap-1">
-                  {filteredItems.map((item) => {
+                  {section.items.map((item) => {
+                    if (item.disabled) {
+                      return (
+                        <li key={item.name}>
+                          <div
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all cursor-not-allowed select-none opacity-60 text-gray-400 dark:text-gray-500 hover:bg-gray-50/50 dark:hover:bg-gray-800/30 ${
+                              !showFullSidebar ? "justify-center px-2" : ""
+                            }`}
+                            title={!showFullSidebar ? `${item.name} (Coming Soon)` : undefined}
+                            aria-disabled="true"
+                          >
+                            <span className="shrink-0 flex items-center justify-center">
+                              {item.icon}
+                            </span>
+                            {showFullSidebar && (
+                              <span className="truncate flex-1 text-sm font-medium text-gray-500 dark:text-gray-400">
+                                {item.name}
+                              </span>
+                            )}
+                            {showFullSidebar && item.badge && (
+                              <span className="ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/60 shrink-0">
+                                {item.badge}
+                              </span>
+                            )}
+                          </div>
+                        </li>
+                      );
+                    }
+
                     const active = isCurrentActive(item.path, item.aliases);
 
                     return (

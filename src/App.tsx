@@ -18,6 +18,8 @@ import UsersPage from "./pages/System/UsersPage";
 import GroupsPage from "./pages/System/GroupsPage";
 import SendToEmailPage from "./pages/AgentSettings/SendToEmailPage";
 import CampaignsPage from "./pages/AgentSettings/CampaignsPage";
+import TemplatesPage from "./pages/AgentSettings/TemplatesPage";
+import PollsPage from "./pages/Conference/PollsPage";
 
 export default function App() {
   return (
@@ -33,6 +35,8 @@ export default function App() {
               <Route path="/dashboard" element={<Home />} />
 
               {/* Conference */}
+              <Route path="/faculty" element={<SpeakersPage />} />
+              <Route path="/conference/faculty" element={<SpeakersPage />} />
               <Route path="/speakers" element={<SpeakersPage />} />
               <Route path="/conference/speakers" element={<SpeakersPage />} />
 
@@ -53,6 +57,15 @@ export default function App() {
               <Route path="/campaigns" element={<CampaignsPage />} />
               <Route path="/conference/campaigns" element={<CampaignsPage />} />
               <Route path="/agent-settings/campaigns" element={<CampaignsPage />} />
+
+              <Route path="/templates" element={<TemplatesPage />} />
+              <Route path="/conference/templates" element={<TemplatesPage />} />
+              <Route path="/agent-settings/templates" element={<TemplatesPage />} />
+
+              {/* Conference Features */}
+              <Route path="/polls" element={<PollsPage />} />
+              <Route path="/conference/polls" element={<PollsPage />} />
+              <Route path="/agent-settings/polls" element={<PollsPage />} />
 
               {/* System */}
               <Route path="/users" element={<UsersPage />} />

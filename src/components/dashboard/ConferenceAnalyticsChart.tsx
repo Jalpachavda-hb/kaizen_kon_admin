@@ -35,7 +35,7 @@ interface DelegateItem {
   state?: string;
 }
 
-interface Props {
+interface Props { 
   sessions: SessionItem[];
   speakers: SpeakerItem[];
   delegates: DelegateItem[];
@@ -46,7 +46,8 @@ export const ConferenceAnalyticsChart: React.FC<Props> = ({
   speakers,
   delegates,
 }) => {
-  const [activeTab, setActiveTab] = useState<"speciality" | "agenda" | "breakdown">("speciality");
+  // Default to Volume Share (breakdown) chart when opening / refreshing dashboard
+  const [activeTab, setActiveTab] = useState<"speciality" | "agenda" | "breakdown">("breakdown");
   // Default to animated line chart as requested by user
   const [chartType, setChartType] = useState<"line" | "spline" | "bar" | "cumulative">("line");
 

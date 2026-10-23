@@ -695,9 +695,9 @@ export default function SessionsPage() {
 
       {/* CREATE / EDIT SESSION SCHEDULE MODAL (POST /api/schedules) */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-scaleIn">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-[#faedf5]/40 dark:bg-gray-800/60">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-xs animate-fadeIn overflow-y-auto">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden animate-scaleIn my-auto">
+            <div className="flex items-center justify-between px-5 py-3 sm:px-6 sm:py-3.5 border-b border-gray-200 dark:border-gray-800 bg-[#faedf5]/40 dark:bg-gray-800/60 shrink-0">
               <div>
                 <h3 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-[#AA2D7B]" />
@@ -710,13 +710,14 @@ export default function SessionsPage() {
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="w-7 h-7 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center text-sm transition-colors"
+                className="w-7 h-7 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center text-sm transition-colors cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleSaveSessionSubmit} className="p-6 space-y-3.5 text-xs">
+            <form onSubmit={handleSaveSessionSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden text-xs">
+              <div className="p-4 sm:p-6 space-y-3 sm:space-y-3.5 overflow-y-auto flex-1">
               {formError && (
                 <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 text-rose-800 dark:text-rose-300 text-xs">
                   {formError}
@@ -857,20 +858,22 @@ export default function SessionsPage() {
                 />
               </div>
 
+              </div>
+
               {/* Actions */}
-              <div className="flex justify-end gap-2.5 pt-3 border-t border-gray-200 dark:border-gray-800">
+              <div className="flex justify-end gap-2.5 px-5 py-3 sm:px-6 sm:py-3.5 border-t border-gray-200 dark:border-gray-800 shrink-0 bg-gray-50/80 dark:bg-gray-900/80">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
                   disabled={isSubmitting}
-                  className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  className="px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-5 py-2 rounded-lg bg-[#AA2D7B] hover:bg-[#D85A9A] text-white font-semibold shadow-xs transition-colors flex items-center gap-2 disabled:opacity-50"
+                  className="px-5 py-2 rounded-lg bg-[#AA2D7B] hover:bg-[#D85A9A] text-white font-semibold shadow-xs transition-colors flex items-center gap-2 disabled:opacity-50 cursor-pointer"
                 >
                   {isSubmitting ? "Saving..." : editingSession ? "Update Schedule" : "Schedule Session"}
                 </button>
@@ -882,9 +885,9 @@ export default function SessionsPage() {
 
       {/* VIEW SESSION BY ID MODAL */}
       {isDetailsModalOpen && selectedSession && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden animate-scaleIn">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-[#55355E] text-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-xs animate-fadeIn overflow-y-auto">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] sm:max-h-[85vh] flex flex-col overflow-hidden animate-scaleIn my-auto">
+            <div className="flex items-center justify-between px-5 py-3 sm:px-6 sm:py-4 border-b border-gray-200 dark:border-gray-800 bg-[#55355E] text-white shrink-0">
               <div>
                 <span className="text-[10px] uppercase font-bold tracking-wider text-pink-200">
                   Session #{selectedSession.id} Details (GET /api/schedules?id={selectedSession.id})
@@ -896,13 +899,13 @@ export default function SessionsPage() {
               <button
                 type="button"
                 onClick={() => setIsDetailsModalOpen(false)}
-                className="w-7 h-7 rounded-lg text-white/80 hover:text-white hover:bg-white/10 flex items-center justify-center text-sm transition-colors"
+                className="w-7 h-7 rounded-lg text-white/80 hover:text-white hover:bg-white/10 flex items-center justify-center text-sm transition-colors cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <div className="p-6 space-y-4 text-xs">
+            <div className="p-4 sm:p-6 space-y-3.5 text-xs overflow-y-auto flex-1 min-h-0">
               {isLoadingDetails && (
                 <div className="flex items-center gap-2 p-2 bg-pink-50 dark:bg-gray-800 rounded-lg text-xs text-[#AA2D7B]">
                   <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -954,14 +957,14 @@ export default function SessionsPage() {
               )}
 
               {/* Controls */}
-              <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-800">
+              <div className="flex items-center justify-between px-5 py-3 sm:px-6 sm:py-3.5 border-t border-gray-200 dark:border-gray-800 shrink-0 bg-gray-50/80 dark:bg-gray-900/80">
                 <button
                   type="button"
                   onClick={() => {
                     setIsDetailsModalOpen(false);
                     handleOpenEditModal(selectedSession);
                   }}
-                  className="px-3 py-1.5 rounded-lg bg-[#55355E] hover:bg-[#6c4377] text-white font-semibold transition-colors"
+                  className="px-3.5 py-1.5 rounded-lg bg-[#55355E] hover:bg-[#6c4377] text-white font-semibold transition-colors cursor-pointer text-xs"
                 >
                   Edit Schedule
                 </button>
@@ -969,7 +972,7 @@ export default function SessionsPage() {
                 <button
                   type="button"
                   onClick={() => setIsDetailsModalOpen(false)}
-                  className="px-4 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 font-medium"
+                  className="px-4 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 font-medium cursor-pointer text-xs"
                 >
                   Close
                 </button>

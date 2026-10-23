@@ -194,7 +194,7 @@ export const SendEmailIcon: React.FC<IconProps> = ({ className = "w-5 h-5" }) =>
   >
     <rect x="2" y="4" width="20" height="16" rx="2" />
     <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-  </svg>
+  </svg>  
 );
 
 // Agent Settings - Campaigns Icon (Megaphone / Bullhorn)
@@ -212,4 +212,52 @@ export const CampaignsIcon: React.FC<IconProps> = ({ className = "w-5 h-5" }) =>
     <path d="M11.6 16.8a3 3 0 1 1-5.8-1.6" />
   </svg>
 );
+
+// Agent Settings - Templates Icon (Layout / Template Document)
+export const TemplatesIcon: React.FC<IconProps> = ({ className = "w-5 h-5" }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <rect x="3" y="3" width="18" height="18" rx="2" />
+    <path d="M3 9h18" />
+    <path d="M9 21V9" />
+  </svg>
+);
+
+// Agent Settings - WhatsApp Icon
+export const WhatsAppIcon: React.FC<IconProps> = ({ className = "w-5 h-5" }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+  >
+    <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.03 1.67c2.2 0 4.26.86 5.82 2.42 1.56 1.56 2.41 3.63 2.41 5.83 0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.32a8.19 8.19 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m-2.54 3.65c-.2 0-.53.08-.81.38-.28.31-1.07 1.05-1.07 2.53 0 1.49 1.08 2.92 1.24 3.13.15.2 2.09 3.22 5.29 4.6 2.59 1.12 3.12.83 3.68.78.56-.05 1.81-.74 2.07-1.47.26-.73.26-1.36.18-1.49-.08-.13-.28-.21-.59-.36-.3-.15-1.8-.89-2.08-.99-.28-.1-.48-.15-.69.16-.2.31-.78.99-.96 1.19-.18.21-.36.23-.66.08-.31-.15-1.29-.47-2.46-1.51-.91-.81-1.52-1.81-1.7-2.12-.18-.3-.02-.47.14-.62.14-.14.32-.37.47-.55.16-.18.21-.31.31-.52.1-.21.05-.38-.02-.54-.08-.15-.69-1.64-.95-2.25-.25-.59-.5-.51-.69-.52-.18 0-.39-.01-.59-.01" />
+  </svg>
+);
+
+// Conference Features - Polls Icon (Survey / Live voting bar chart)
+export const PollsIcon: React.FC<IconProps> = ({ className = "w-5 h-5" }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <rect x="3" y="3" width="18" height="18" rx="2.5" />
+    <path d="M7 17v-4" />
+    <path d="M12 17V8" />
+    <path d="M17 17v-7" />
+  </svg>
+);
+
+
 

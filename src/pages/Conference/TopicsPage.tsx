@@ -254,86 +254,88 @@ export default function TopicsPage() {
 
       {/* Add / Edit Topic Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-fadeIn">
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-200 dark:border-gray-800 bg-[#faedf5]/30">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/50 backdrop-blur-xs overflow-y-auto">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-2xl w-full max-w-md max-h-[92vh] sm:max-h-[88vh] flex flex-col overflow-hidden animate-fadeIn my-auto">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-200 dark:border-gray-800 bg-[#faedf5]/30 shrink-0">
               <h3 className="text-sm font-bold text-gray-900 dark:text-white">
                 {editingTopic ? "Edit Track" : "Add Conference Track"}
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 text-sm"
+                className="text-gray-400 hover:text-gray-600 text-sm cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleSaveTopic} className="p-5 space-y-3.5 text-xs">
-              <div>
-                <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                  Track / Topic Name *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Surgical Robotics & Haptic AI"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#AA2D7B]"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
+            <form onSubmit={handleSaveTopic} className="flex flex-col flex-1 min-h-0 overflow-hidden text-xs">
+              <div className="p-4 sm:p-5 space-y-3.5 overflow-y-auto flex-1">
                 <div>
                   <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                    Track Code
+                    Track / Topic Name *
                   </label>
                   <input
                     type="text"
-                    value={code}
-                    onChange={(e) => setCode(e.target.value)}
-                    placeholder="SURG-AI"
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#AA2D7B] uppercase font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                    Track Chair
-                  </label>
-                  <input
-                    type="text"
-                    value={chair}
-                    onChange={(e) => setChair(e.target.value)}
-                    placeholder="Dr. Maya Lin"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. Surgical Robotics & Haptic AI"
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#AA2D7B]"
                   />
                 </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                      Track Code
+                    </label>
+                    <input
+                      type="text"
+                      value={code}
+                      onChange={(e) => setCode(e.target.value)}
+                      placeholder="SURG-AI"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#AA2D7B] uppercase font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                      Track Chair
+                    </label>
+                    <input
+                      type="text"
+                      value={chair}
+                      onChange={(e) => setChair(e.target.value)}
+                      placeholder="Dr. Maya Lin"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#AA2D7B]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                    Description
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Brief description of the topics covered in this track..."
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#AA2D7B] resize-y"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                  Description
-                </label>
-                <textarea
-                  rows={2}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Brief description of the topics covered in this track..."
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-[#AA2D7B]"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-gray-200">
+              <div className="flex justify-end gap-2 px-5 py-3 border-t border-gray-200 shrink-0 bg-gray-50/80 dark:bg-gray-800/80">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100"
+                  className="px-3.5 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 rounded-lg bg-[#AA2D7B] hover:bg-[#D85A9A] text-white font-semibold transition-colors"
+                  className="px-4 py-1.5 rounded-lg bg-[#AA2D7B] hover:bg-[#D85A9A] text-white font-semibold transition-colors cursor-pointer"
                 >
                   {editingTopic ? "Save Changes" : "Create Track"}
                 </button>

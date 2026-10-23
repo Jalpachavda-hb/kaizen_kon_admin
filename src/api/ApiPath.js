@@ -1,5 +1,5 @@
 // Base API Configuration
-export const BASE_URL = 'https://34g3qd2p-8000.inc1.devtunnels.ms';
+export const BASE_URL = 'http://192.168.29.201:8000';
 export const API_BASE_URL = `${BASE_URL}/api`;
 
 // Compatibility aliases
@@ -15,6 +15,8 @@ export const API_ENDPOINTS = {
   SESSIONS: `${API_BASE_URL}/sessions`,
   EMAIL_AGENT_CONTACTS: `${BASE_URL}/api/v1/email-agent/contacts`,
   EMAIL_AGENT_CAMPAIGNS: `${BASE_URL}/api/v1/email-agent/campaigns`,
+  EMAIL_AGENT_TEMPLATES: `${BASE_URL}/api/v1/email-agent/templates`,
+  POLLS_ADMIN: `${BASE_URL}/polling/api/admin/polls`,
 };
 
 /**
@@ -181,6 +183,12 @@ export const saveSpeaker = async (speakerData) => {
         if (key === 'id') {
           if (value !== undefined && value !== null && value !== '' && Number(value) > 0) {
             body.append('id', String(value));
+          }
+          return;
+        }
+        if (key === 'role') {
+          if (value !== undefined && value !== null && value !== '') {
+            body.append('role', String(Number(value)));
           }
           return;
         }
@@ -500,6 +508,41 @@ export const getEmailAgentContacts = async (offset = 0, limit = 100) => {
     return [];
   } catch (error) {
     console.error('Error in getEmailAgentContacts API:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get Contact By ID API
+ * Endpoint: GET {BASE_URL}/api/v1/email-agent/contacts/{contact_id}
+ *
+ * @param {string} contactId
+ * @returns {Promise<any>} Contact object
+ */
+export const getContactById = async (contactId) => {
+  try {
+    if (!contactId) throw new Error('Contact ID is required');
+    const url = `${API_ENDPOINTS.EMAIL_AGENT_CONTACTS}/${encodeURIComponent(contactId)}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      const errorMsg = data?.detail || data?.message || `Failed to fetch contact with status ${response.status}`;
+      const error = new Error(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg));
+      error.status = response.status;
+      error.data = data;
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error in getContactById API:', error);
     throw error;
   }
 };
@@ -834,6 +877,671 @@ export const stopCampaign = async (campaignId) => {
   }
 };
 
+/**
+ * Pause Campaign API
+ * Endpoint: POST {BASE_URL}/api/v1/email-agent/campaigns/{campaign_id}/pause
+ *
+ * @param {string} campaignId - The UUID of the campaign
+ * @returns {Promise<any>} Updated campaign object
+ */
+export const pauseCampaign = async (campaignId) => {
+  try {
+    if (!campaignId) throw new Error('Campaign ID is required to pause campaign');
+    const url = `${API_ENDPOINTS.EMAIL_AGENT_CAMPAIGNS}/${encodeURIComponent(campaignId)}/pause`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to pause campaign';
+      if (data) {
+        if (typeof data.detail === 'string') {
+          errorMessage = data.detail;
+        } else if (Array.isArray(data.detail)) {
+          errorMessage = data.detail.map((d) => d.msg || JSON.stringify(d)).join(', ');
+        } else if (data.message) {
+          errorMessage = data.message;
+        }
+      }
+      const error = new Error(errorMessage);
+      error.status = response.status;
+      error.data = data;
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error in pauseCampaign API:', error);
+    throw error;
+  }
+};
+
+/**
+ * Resume Campaign API
+ * Endpoint: POST {BASE_URL}/api/v1/email-agent/campaigns/{campaign_id}/resume
+ *
+ * @param {string} campaignId - The UUID of the campaign
+ * @returns {Promise<any>} Updated campaign object
+ */
+export const resumeCampaign = async (campaignId) => {
+  try {
+    if (!campaignId) throw new Error('Campaign ID is required to resume campaign');
+    const url = `${API_ENDPOINTS.EMAIL_AGENT_CAMPAIGNS}/${encodeURIComponent(campaignId)}/resume`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to resume campaign';
+      if (data) {
+        if (typeof data.detail === 'string') {
+          errorMessage = data.detail;
+        } else if (Array.isArray(data.detail)) {
+          errorMessage = data.detail.map((d) => d.msg || JSON.stringify(d)).join(', ');
+        } else if (data.message) {
+          errorMessage = data.message;
+        }
+      }
+      const error = new Error(errorMessage);
+      error.status = response.status;
+      error.data = data;
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error in resumeCampaign API:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get Campaign Logs API
+ * Endpoint: GET {BASE_URL}/api/v1/email-agent/campaigns/{campaign_id}/logs
+ *
+ * @param {string} campaignId - The UUID of the campaign
+ * @returns {Promise<any[]>} Array of log objects
+ */
+export const getCampaignLogs = async (campaignId) => {
+  try {
+    if (!campaignId) throw new Error('Campaign ID is required to fetch logs');
+    const url = `${API_ENDPOINTS.EMAIL_AGENT_CAMPAIGNS}/${encodeURIComponent(campaignId)}/logs`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to fetch campaign logs';
+      if (data) {
+        if (typeof data.detail === 'string') {
+          errorMessage = data.detail;
+        } else if (Array.isArray(data.detail)) {
+          errorMessage = data.detail.map((d) => d.msg || JSON.stringify(d)).join(', ');
+        } else if (data.message) {
+          errorMessage = data.message;
+        }
+      }
+      const error = new Error(errorMessage);
+      error.status = response.status;
+      error.data = data;
+      throw error;
+    }
+
+    if (Array.isArray(data)) {
+      return data;
+    }
+
+    if (data && Array.isArray(data.logs)) {
+      return data.logs;
+    }
+
+    if (data && Array.isArray(data.results)) {
+      return data.results;
+    }
+
+    return [];
+  } catch (error) {
+    console.error('Error in getCampaignLogs API:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get Email Agent Templates API
+ * Endpoint: GET http://192.168.29.201:8000/api/v1/email-agent/templates
+ *
+ * @returns {Promise<any[]>} Array of templates
+ */
+export const getTemplates = async () => {
+  try {
+    const response = await fetch(API_ENDPOINTS.EMAIL_AGENT_TEMPLATES, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      const errorMsg = data?.detail || data?.message || `Request failed with status ${response.status}`;
+      const error = new Error(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg));
+      error.status = response.status;
+      error.data = data;
+      throw error;
+    }
+
+    if (Array.isArray(data)) {
+      return data;
+    }
+    if (data && Array.isArray(data.value)) {
+      return data.value;
+    }
+    if (data && Array.isArray(data.results)) {
+      return data.results;
+    }
+    return [];
+  } catch (error) {
+    console.error('Error in getTemplates API:', error);
+    throw error;
+  }
+};
+
+/**
+ * Create Email Agent Template API
+ * Endpoint: POST http://192.168.29.201:8000/api/v1/email-agent/templates
+ * Expects multipart/form-data: name, purpose (initial|followup|registration), subject, html_file, active (boolean)
+ *
+ * @param {FormData|Object} templateData
+ * @returns {Promise<any>}
+ */
+export const createTemplate = async (templateData) => {
+  try {
+    let body;
+    if (templateData instanceof FormData) {
+      body = templateData;
+    } else {
+      body = new FormData();
+      body.append('name', templateData.name);
+      body.append('purpose', templateData.purpose);
+      body.append('subject', templateData.subject);
+      body.append('active', templateData.active !== undefined ? String(templateData.active) : 'true');
+
+      if (templateData.html_file instanceof File || templateData.html_file instanceof Blob) {
+        body.append('html_file', templateData.html_file, 'template.html');
+      } else if (typeof templateData.html_body === 'string') {
+        const blob = new Blob([templateData.html_body], { type: 'text/html' });
+        body.append('html_file', blob, 'template.html');
+      }
+    }
+
+    const response = await fetch(API_ENDPOINTS.EMAIL_AGENT_TEMPLATES, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+      },
+      body,
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to create template';
+      if (data) {
+        if (typeof data.detail === 'string') {
+          errorMessage = data.detail;
+        } else if (Array.isArray(data.detail)) {
+          errorMessage = data.detail.map((d) => d.msg || JSON.stringify(d)).join(', ');
+        } else if (data.message) {
+          errorMessage = data.message;
+        }
+      }
+      const error = new Error(errorMessage);
+      error.status = response.status;
+      error.data = data;
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error in createTemplate API:', error);
+    throw error;
+  }
+};
+
+/**
+ * Update Email Agent Template API
+ * Endpoint: PATCH http://192.168.29.201:8000/api/v1/email-agent/templates/{template_id}
+ *
+ * @param {string} templateId
+ * @param {FormData|Object} updateData
+ * @returns {Promise<any>}
+ */
+export const updateTemplate = async (templateId, updateData) => {
+  try {
+    let body;
+    if (updateData instanceof FormData) {
+      body = updateData;
+    } else {
+      body = new FormData();
+      if (updateData.name !== undefined && updateData.name !== null) {
+        body.append('name', updateData.name);
+      }
+      if (updateData.subject !== undefined && updateData.subject !== null) {
+        body.append('subject', updateData.subject);
+      }
+      if (updateData.active !== undefined && updateData.active !== null) {
+        body.append('active', String(updateData.active));
+      }
+      if (updateData.html_file instanceof File || updateData.html_file instanceof Blob) {
+        body.append('html_file', updateData.html_file, 'template.html');
+      } else if (typeof updateData.html_body === 'string' && updateData.html_body.trim()) {
+        const blob = new Blob([updateData.html_body], { type: 'text/html' });
+        body.append('html_file', blob, 'template.html');
+      }
+    }
+
+    const url = `${API_ENDPOINTS.EMAIL_AGENT_TEMPLATES}/${encodeURIComponent(templateId)}`;
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Accept': 'application/json',
+      },
+      body,
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to update template';
+      if (data) {
+        if (typeof data.detail === 'string') {
+          errorMessage = data.detail;
+        } else if (Array.isArray(data.detail)) {
+          errorMessage = data.detail.map((d) => d.msg || JSON.stringify(d)).join(', ');
+        } else if (data.message) {
+          errorMessage = data.message;
+        }
+      }
+      const error = new Error(errorMessage);
+      error.status = response.status;
+      error.data = data;
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error in updateTemplate API:', error);
+    throw error;
+  }
+};
+
+/**
+ * Delete Email Agent Template API
+ * Endpoint: DELETE http://192.168.29.201:8000/api/v1/email-agent/templates/{template_id}
+ *
+ * @param {string} templateId - UUID of the template to delete
+ * @returns {Promise<any>}
+ */
+export const deleteTemplate = async (templateId) => {
+  try {
+    if (!templateId) {
+      throw new Error('Template ID is required for deletion');
+    }
+
+    const url = `${API_ENDPOINTS.EMAIL_AGENT_TEMPLATES}/${encodeURIComponent(templateId)}`;
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      let errorMessage = 'Failed to delete template';
+      if (data) {
+        if (typeof data.detail === 'string') {
+          errorMessage = data.detail;
+        } else if (Array.isArray(data.detail)) {
+          errorMessage = data.detail.map((d) => d.msg || JSON.stringify(d)).join(', ');
+        } else if (data.message) {
+          errorMessage = data.message;
+        }
+      }
+      const error = new Error(errorMessage || `Request failed with status ${response.status}`);
+      error.status = response.status;
+      error.data = data;
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error in deleteTemplate API:', error);
+    throw error;
+  }
+};
+
+
+/**
+ * Preview Email Agent Template API
+ * Endpoint: POST http://192.168.29.201:8000/api/v1/email-agent/templates/{template_id}/preview?name={name}
+ *
+ * @param {string} templateId
+ * @param {string} [name='Dr. Example']
+ * @returns {Promise<any>}
+ */
+export const previewTemplate = async (templateId, name = 'Dr. Example') => {
+  try {
+    const url = `${API_ENDPOINTS.EMAIL_AGENT_TEMPLATES}/${encodeURIComponent(templateId)}/preview?name=${encodeURIComponent(name)}`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      const errorMsg = data?.detail || data?.message || `Failed to preview template (${response.status})`;
+      const error = new Error(typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg));
+      error.status = response.status;
+      error.data = data;
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error in previewTemplate API:', error);
+    throw error;
+  }
+};
+
+/**
+ * Create Live Poll API
+ * Endpoint: POST http://192.168.29.201:8000/polling/api/admin/polls
+ * Header: x-admin-api-key
+ * Request: { question: string, options: string[] }
+ * Response (201): { id, question, options: [{ id, text, votes }], is_active, poll_url, qr_code_url }
+ */
+export const createPoll = async (pollData) => {
+  try {
+    const adminApiKey =
+      (typeof import.meta !== 'undefined' && import.meta.env && (import.meta.env.VITE_POLL_KEY || import.meta.env.POLL_KEY)) ||
+      '5IZNL1TLAMwzGOeHZudBXjsFkkWU5yuY3_VzJxeBXu1rv6EWWFLelJeujiIxKvEY';
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'accept': '*/*',
+    };
+
+    if (adminApiKey) {
+      headers['x-admin-api-key'] = adminApiKey;
+    }
+
+    const payload = {
+      question: pollData.question,
+      options: pollData.options,
+    };
+
+    const response = await fetch(`${BASE_URL}/polling/api/admin/polls`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      let errorMessage = `Failed to create poll: ${response.status} ${response.statusText}`;
+      try {
+        const errorData = await response.json();
+        if (errorData.detail) {
+          if (Array.isArray(errorData.detail)) {
+            errorMessage = errorData.detail.map((d) => d.msg || d.loc?.join('.') || JSON.stringify(d)).join(', ');
+          } else {
+            errorMessage = errorData.detail;
+          }
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+      } catch (_) {}
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error in createPoll API:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get Admin Polls API
+ * Endpoint: GET http://192.168.29.201:8000/polling/api/admin/polls
+ * Header: x-admin-api-key
+ * Returns: Array of { id, question, options: [{ id, text, votes }], is_active, poll_url, qr_code_url }
+ */
+export const getAdminPolls = async () => {
+  try {
+    const adminApiKey =
+      (typeof import.meta !== 'undefined' && import.meta.env && (import.meta.env.VITE_POLL_KEY || import.meta.env.POLL_KEY)) ||
+      '5IZNL1TLAMwzGOeHZudBXjsFkkWU5yuY3_VzJxeBXu1rv6EWWFLelJeujiIxKvEY';
+
+    const headers = {
+      'accept': 'application/json',
+    };
+    if (adminApiKey) {
+      headers['x-admin-api-key'] = adminApiKey;
+    }
+
+    const response = await fetch(`${BASE_URL}/polling/api/admin/polls`, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!response.ok) {
+      let errorMessage = `Failed to fetch polls: ${response.status} ${response.statusText}`;
+      try {
+        const errorData = await response.json();
+        if (errorData.detail) {
+          if (Array.isArray(errorData.detail)) {
+            errorMessage = errorData.detail.map((d) => d.msg || d.loc?.join('.') || JSON.stringify(d)).join(', ');
+          } else {
+            errorMessage = errorData.detail;
+          }
+        }
+      } catch (_) {}
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error('Error in getAdminPolls API:', error);
+    throw error;
+  }
+};
+
+/**
+ * Vote in Poll API
+ * Endpoint: POST http://192.168.29.201:8000/polling/api/polls/{poll_id}/vote
+ * Body: { option_id: number }
+ */
+export const votePoll = async (pollId, optionId) => {
+  try {
+    const response = await fetch(`${BASE_URL}/polling/api/polls/${pollId}/vote`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'accept': 'application/json',
+      },
+      body: JSON.stringify({
+        option_id: Number(optionId),
+      }),
+    });
+
+    if (!response.ok) {
+      let errorMessage = `Failed to submit vote: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        if (errorData.detail) {
+          errorMessage = typeof errorData.detail === 'string'
+            ? errorData.detail
+            : JSON.stringify(errorData.detail);
+        }
+      } catch (_) {}
+      throw new Error(errorMessage);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error in votePoll API:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get Poll and its current results (Live Poll API)
+ * Endpoint: GET http://192.168.29.201:8000/polling/api/polls/{poll_id}
+ *
+ * Parameters:
+ *   poll_id: number | string (integer required)
+ *
+ * Expected Response Structure (200):
+ * {
+ *   "id": 1,
+ *   "question": "string",
+ *   "options": [
+ *     { "id": 1, "text": "string", "votes": 0 }
+ *   ],
+ *   "is_active": true
+ * }
+ *
+ * @param {number|string} pollId - The ID of the poll to fetch
+ * @returns {Promise<any>}
+ */
+export const getPollById = async (pollId) => {
+  try {
+    const id = Number(pollId);
+    if (isNaN(id)) {
+      throw new Error(`Invalid poll ID: ${pollId}`);
+    }
+
+    const response = await fetch(`${BASE_URL}/polling/api/polls/${id}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      let errorMessage = `Failed to get live poll: ${response.status} ${response.statusText}`;
+      try {
+        const errorData = await response.json();
+        if (errorData.detail) {
+          if (Array.isArray(errorData.detail)) {
+            errorMessage = errorData.detail.map((d) => d.msg || JSON.stringify(d)).join(', ');
+          } else if (typeof errorData.detail === 'string') {
+            errorMessage = errorData.detail;
+          } else {
+            errorMessage = JSON.stringify(errorData.detail);
+          }
+        }
+      } catch (_) {}
+      throw new Error(errorMessage);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error in getPollById API:', error);
+    throw error;
+  }
+};
+
+// Alias for convenience
+export const getLivePoll = getPollById;
+
+/**
+ * Unified Polling API:
+ * - When fetching the list: call without ID: getPolls() -> calls GET /polling/api/admin/polls
+ * - When showing results of a current poll: call with ID: getPolls(pollId) -> calls GET /polling/api/polls/{poll_id}
+ *
+ * @param {number|string} [pollId] - Optional ID. Omit to fetch listing, pass ID to get current poll results.
+ * @returns {Promise<any>}
+ */
+export const getPolls = async (pollId = null) => {
+  if (pollId !== null && pollId !== undefined && String(pollId).trim() !== '') {
+    // Show results for current poll (Passing ID)
+    return await getPollById(pollId);
+  } else {
+    // List all polls for dashboard (Do NOT pass ID)
+    return await getAdminPolls();
+  }
+};
+
+export const getPollsApi = getPolls;
+
+/**
+ * Get Poll QR Code Image URL
+ * Endpoint: GET http://192.168.29.201:8000/polling/api/polls/{poll_id}/qr
+ * Returns a PNG QR code image.
+ *
+ * @param {number|string} pollId - Poll ID
+ * @returns {string} Direct URL to the PNG image
+ */
+export const getPollQrCodeUrl = (pollId) => {
+  const id = Number(pollId);
+  return `${BASE_URL}/polling/api/polls/${id}/qr`;
+};
+
+/**
+ * Download Poll QR Code as a PNG file directly in the browser
+ * Endpoint: GET http://192.168.29.201:8000/polling/api/polls/{poll_id}/qr
+ *
+ * @param {number|string} pollId - Poll ID
+ * @param {string} [filename] - Optional filename
+ */
+export const downloadPollQrCode = async (pollId, filename = null) => {
+  try {
+    const id = Number(pollId);
+    const url = getPollQrCodeUrl(id);
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch QR code image: ${response.status}`);
+    }
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = filename || `kaizen-con-poll-${id}-qr.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(blobUrl);
+    return true;
+  } catch (error) {
+    console.error('Error downloading QR code:', error);
+    throw error;
+  }
+};
+
 export default {
   BASE_URL,
   API_BASE_URL,
@@ -861,4 +1569,21 @@ export default {
   approveCampaign,
   startCampaign,
   stopCampaign,
+  pauseCampaign,
+  resumeCampaign,
+  getCampaignLogs,
+  getTemplates,
+  createTemplate,
+  updateTemplate,
+  deleteTemplate,
+  previewTemplate,
+  createPoll,
+  getAdminPolls,
+  votePoll,
+  getPollById,
+  getLivePoll,
+  getPolls,
+  getPollsApi,
+  getPollQrCodeUrl,
+  downloadPollQrCode,
 };
