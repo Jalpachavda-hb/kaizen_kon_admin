@@ -1,5 +1,5 @@
 // Base API Configuration
-export const BASE_URL = 'http://192.168.29.201:8000';
+export const BASE_URL = 'https://kaizencondemo2027-1.onrender.com';
 export const API_BASE_URL = `${BASE_URL}/api`;
 
 // Compatibility aliases
