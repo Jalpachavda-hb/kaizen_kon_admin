@@ -5,6 +5,7 @@ import { useToast } from "../../context/ToastContext";
 import {
   getEmailAgentContacts,
   importExcelContacts,
+  stopContact,
 } from "../../api/ApiPath";
 import Swal from "sweetalert2";
 
@@ -12,6 +13,7 @@ export interface ContactItem {
   id: string;
   email: string;
   name: string | null;
+  type?: string | null;
   status: string;
   unsubscribed: boolean;
   created_at: string;
@@ -44,6 +46,10 @@ export default function SendToEmailPage() {
   const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Stop Contact State
+  const [stoppingId, setStoppingId] = useState<string | null>(null);
+  const [isBulkStopping, setIsBulkStopping] = useState(false);
+
   // Fetch contacts from dynamic API
   const fetchContacts = useCallback(async () => {
     setLoading(true);
@@ -73,6 +79,7 @@ export default function SendToEmailPage() {
     const matchesSearch =
       (c.name && c.name.toLowerCase().includes(q)) ||
       (c.email && c.email.toLowerCase().includes(q)) ||
+      (c.type && c.type.toLowerCase().includes(q)) ||
       (c.status && c.status.toLowerCase().includes(q));
 
     if (!matchesSearch) return false;
@@ -148,6 +155,155 @@ export default function SendToEmailPage() {
       });
     } catch {
       return isoString;
+    }
+  };
+
+  // Stop single contact
+  const handleStopContact = async (contact: ContactItem) => {
+    const isDark = document.documentElement.classList.contains("dark");
+    const displayName = contact.name || contact.email;
+
+    const result = await Swal.fire({
+      title: "Stop Contact?",
+      html: `
+        <div style="font-size: 13.5px; text-align: left; line-height: 1.6; padding: 4px;">
+          <p style="color: #4b5563;">Are you sure you want to stop communication for:</p>
+          <p style="margin-top: 6px; font-weight: 600; color: #AA2D7B; font-size: 14px;">${displayName} &lt;${contact.email}&gt;</p>
+          <p style="margin-top: 4px; font-family: monospace; font-size: 11px; color: #9ca3af;">ID: ${contact.id}</p>
+          <div style="margin-top: 10px; padding: 8px 12px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; border-radius: 4px; font-size: 12.5px; color: #dc2626;">
+            This contact will be marked as unsubscribed and stopped from receiving further campaign emails.
+          </div>
+        </div>
+      `,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Yes, Stop Contact",
+      cancelButtonText: "Cancel",
+      background: isDark ? "#111827" : "#FFFFFF",
+      color: isDark ? "#F9FAFB" : "#111827",
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      setStoppingId(contact.id);
+      const res = await stopContact(contact.id);
+
+      // Update locally immediately
+      setContacts((prev) =>
+        prev.map((c) =>
+          c.id === contact.id
+            ? {
+                ...c,
+                unsubscribed: true,
+                status: res?.status || "stopped",
+                ...(res?.updated_at ? { updated_at: res.updated_at } : {}),
+              }
+            : c
+        )
+      );
+
+      await Swal.fire({
+        title: "Contact Stopped",
+        text: `Contact "${displayName}" has been stopped successfully.`,
+        icon: "success",
+        confirmButtonColor: "#AA2D7B",
+        background: isDark ? "#111827" : "#FFFFFF",
+        color: isDark ? "#F9FAFB" : "#111827",
+      });
+    } catch (error: any) {
+      console.error("Failed to stop contact:", error);
+      await Swal.fire({
+        title: "Action Failed",
+        text: error?.message || "Could not stop contact. Please try again.",
+        icon: "error",
+        confirmButtonColor: "#AA2D7B",
+        background: isDark ? "#111827" : "#FFFFFF",
+        color: isDark ? "#F9FAFB" : "#111827",
+      });
+    } finally {
+      setStoppingId(null);
+    }
+  };
+
+  // Bulk stop selected contacts
+  const handleBulkStop = async () => {
+    const isDark = document.documentElement.classList.contains("dark");
+    const eligibleSelected = contacts.filter(
+      (c) => selectedIds.includes(c.id) && !c.unsubscribed
+    );
+
+    if (eligibleSelected.length === 0) {
+      await Swal.fire({
+        title: "No Eligible Contacts",
+        text: "All selected contacts are already stopped or unsubscribed.",
+        icon: "info",
+        confirmButtonColor: "#AA2D7B",
+        background: isDark ? "#111827" : "#FFFFFF",
+        color: isDark ? "#F9FAFB" : "#111827",
+      });
+      return;
+    }
+
+    const result = await Swal.fire({
+      title: `Stop ${eligibleSelected.length} Contact(s)?`,
+      html: `
+        <div style="font-size: 13.5px; text-align: left; line-height: 1.6; padding: 4px;">
+          <p style="color: #4b5563;">
+            Are you sure you want to stop communication for all <b>${eligibleSelected.length}</b> selected recipient(s)?
+          </p>
+          <div style="margin-top: 10px; padding: 8px 12px; background: rgba(239, 68, 68, 0.08); border-left: 3px solid #ef4444; border-radius: 4px; font-size: 12.5px; color: #dc2626;">
+            These contacts will be unsubscribed and excluded from automated campaigns.
+          </div>
+        </div>
+      `,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: `Yes, Stop ${eligibleSelected.length} Contacts`,
+      cancelButtonText: "Cancel",
+      background: isDark ? "#111827" : "#FFFFFF",
+      color: isDark ? "#F9FAFB" : "#111827",
+    });
+
+    if (!result.isConfirmed) return;
+
+    setIsBulkStopping(true);
+    let successCount = 0;
+    let failCount = 0;
+
+    try {
+      for (const c of eligibleSelected) {
+        try {
+          await stopContact(c.id);
+          successCount++;
+        } catch (err) {
+          console.error(`Failed to stop contact ${c.id}:`, err);
+          failCount++;
+        }
+      }
+
+      setSelectedIds([]);
+      await fetchContacts();
+
+      await Swal.fire({
+        title: "Batch Action Completed",
+        html: `
+          <div style="font-size: 13.5px; text-align: left; line-height: 1.6;">
+            <p style="color: #10b981; font-weight: 600;">✓ <b>${successCount}</b> contact(s) successfully stopped.</p>
+            ${failCount > 0 ? `<p style="color: #ef4444; margin-top: 4px;">✕ <b>${failCount}</b> contact(s) could not be stopped.</p>` : ""}
+          </div>
+        `,
+        icon: successCount > 0 ? "success" : "error",
+        confirmButtonColor: "#AA2D7B",
+        background: isDark ? "#111827" : "#FFFFFF",
+        color: isDark ? "#F9FAFB" : "#111827",
+      });
+    } finally {
+      setIsBulkStopping(false);
     }
   };
 
@@ -290,7 +446,7 @@ export default function SendToEmailPage() {
         subtitle="Live dynamic recipient contacts from Email Agent API. Dispatch automated announcements and direct emails."
         searchValue={search}
         onSearchChange={setSearch}
-        searchPlaceholder="Search recipient name, email, or status..."
+        searchPlaceholder="Search recipient name, email, type, or status..."
         actionButton={
           <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
             {/* Download Template Button */}
@@ -357,6 +513,31 @@ export default function SendToEmailPage() {
               </svg>
               <span>Refresh</span>
             </button>
+
+            {/* Stop Selected Contacts */}
+            {selectedIds.length > 0 && (
+              <button
+                type="button"
+                onClick={handleBulkStop}
+                disabled={isBulkStopping}
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-900/60 rounded-lg shadow-xs transition-colors cursor-pointer disabled:opacity-60"
+                title="Stop / Unsubscribe selected contacts"
+              >
+                {isBulkStopping ? (
+                  <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                    <path d="M12 2a10 10 0 0 1 10 10" />
+                  </svg>
+                ) : (
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="15" y1="9" x2="9" y2="15" />
+                    <line x1="9" y1="9" x2="15" y2="15" />
+                  </svg>
+                )}
+                <span>Stop Selected ({selectedIds.length})</span>
+              </button>
+            )}
 
             {/* Compose / Broadcast */}
             <button
@@ -520,15 +701,17 @@ export default function SendToEmailPage() {
                 </th>
                 <th className="px-5 py-3.5">Recipient</th>
                 <th className="px-5 py-3.5">Email Address</th>
+                <th className="px-5 py-3.5 text-center">Type</th>
                 <th className="px-5 py-3.5 text-center">Status</th>
                 <th className="px-5 py-3.5 text-center">Subscription</th>
                 <th className="px-5 py-3.5">Created Date</th>
+                <th className="px-5 py-3.5 text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-14">
+                  <td colSpan={8} className="text-center py-14">
                     <div className="inline-flex items-center gap-2.5 text-sm text-gray-500 dark:text-gray-400">
                       <svg className="w-5 h-5 animate-spin text-[#AA2D7B]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                         <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
@@ -540,7 +723,7 @@ export default function SendToEmailPage() {
                 </tr>
               ) : filteredContacts.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-14 text-gray-400 dark:text-gray-500 text-sm">
+                  <td colSpan={8} className="text-center py-14 text-gray-400 dark:text-gray-500 text-sm">
                     No contacts found matching your query.
                   </td>
                 </tr>
@@ -599,6 +782,24 @@ export default function SendToEmailPage() {
                       </td>
 
                       <td className="px-5 py-4 text-center">
+                        {contact.type ? (
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${
+                              contact.type.toLowerCase().includes("doctor")
+                                ? "bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+                                : contact.type.toLowerCase().includes("sponser") || contact.type.toLowerCase().includes("sponsor")
+                                ? "bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800"
+                                : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700"
+                            }`}
+                          >
+                            {contact.type}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400 dark:text-gray-500 font-mono">—</span>
+                        )}
+                      </td>
+
+                      <td className="px-5 py-4 text-center">
                         <span
                           className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${
                             isEligible
@@ -630,6 +831,48 @@ export default function SendToEmailPage() {
                       <td className="px-5 py-4 text-xs text-gray-500 dark:text-gray-400 font-mono">
                         {formatDate(contact.created_at)}
                       </td>
+
+                      <td className="px-5 py-4 text-center">
+                        {contact.unsubscribed ? (
+                          <span
+                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 rounded-lg cursor-not-allowed select-none"
+                            title="Contact is already stopped/unsubscribed"
+                          >
+                            <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                              <circle cx="12" cy="12" r="10" />
+                              <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                            </svg>
+                            <span>Stopped</span>
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleStopContact(contact)}
+                            disabled={stoppingId === contact.id}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-900/60 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                            title="Stop / unsubscribe this contact from automated emails"
+                          >
+                            {stoppingId === contact.id ? (
+                              <>
+                                <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                  <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                                  <path d="M12 2a10 10 0 0 1 10 10" />
+                                </svg>
+                                <span>Stopping...</span>
+                              </>
+                            ) : (
+                              <>
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                  <circle cx="12" cy="12" r="10" />
+                                  <line x1="15" y1="9" x2="9" y2="15" />
+                                  <line x1="9" y1="9" x2="15" y2="15" />
+                                </svg>
+                                <span>Stop</span>
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   );
                 })
@@ -655,7 +898,7 @@ export default function SendToEmailPage() {
                 </span>
                 <div>
                   <h3 className="text-base font-bold text-gray-900 dark:text-white">Import Contacts Excel</h3>
-                  <p className="text-xs text-gray-500">Upload .xlsx spreadsheet with recipient emails</p>
+                  <p className="text-xs text-gray-500">Upload .xlsx spreadsheet with recipient email, name, and type</p>
                 </div>
               </div>
 
@@ -760,7 +1003,7 @@ export default function SendToEmailPage() {
                         Click to select or drag and drop
                       </p>
                       <p className="text-[11px] text-gray-400 mt-0.5">
-                        Supports .xlsx and .xls Excel files
+                        Supports .xlsx and .xls Excel files (Columns: Email, Name, Type)
                       </p>
                     </div>
                   </div>
