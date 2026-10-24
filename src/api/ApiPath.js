@@ -687,8 +687,12 @@ export const getCampaigns = async (offset = 0, limit = 100, campaignId = null) =
  * Request Body:
  * {
  *   "name": "string",
+ *   "description": "string",
+ *   "goal": "registration",
  *   "contact_ids": ["3fa85f64-5717-4562-b3fc-2c963f66afa6"],
+ *   "template_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
  *   "registration_url": "https://example.com/",
+ *   "followup_interval_days": 1,
  *   "followup_delay_minutes": 1,
  *   "sending_delay_seconds": 3600,
  *   "max_followups": 10,
@@ -702,6 +706,10 @@ export const createCampaign = async (campaignData) => {
   try {
     const payload = {
       name: campaignData.name || '',
+      description: campaignData.description !== undefined && campaignData.description !== null && campaignData.description !== ''
+        ? String(campaignData.description).trim()
+        : null,
+      goal: campaignData.goal || 'registration',
       contact_ids: Array.isArray(campaignData.contact_ids) ? campaignData.contact_ids : [],
       registration_url: campaignData.registration_url || '',
       followup_delay_minutes: Number(campaignData.followup_delay_minutes ?? 1),
@@ -709,6 +717,13 @@ export const createCampaign = async (campaignData) => {
       max_followups: Number(campaignData.max_followups ?? 10),
       max_sends_per_day: Number(campaignData.max_sends_per_day ?? 1),
     };
+
+    if (campaignData.template_id) {
+      payload.template_id = campaignData.template_id;
+    }
+    if (campaignData.followup_interval_days !== undefined && campaignData.followup_interval_days !== null) {
+      payload.followup_interval_days = Number(campaignData.followup_interval_days);
+    }
 
     const response = await fetch(API_ENDPOINTS.EMAIL_AGENT_CAMPAIGNS, {
       method: 'POST',

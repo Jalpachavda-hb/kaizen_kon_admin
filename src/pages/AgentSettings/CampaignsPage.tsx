@@ -13,6 +13,7 @@ import {
   pauseCampaign,
   resumeCampaign,
   getCampaignLogs,
+  getTemplates,
 } from "../../api/ApiPath";
 import Swal from "sweetalert2";
 
@@ -30,6 +31,8 @@ export interface CampaignConfiguration {
 export interface CampaignItem {
   id: string;
   name: string;
+  description?: string | null;
+  goal?: string;
   status: string;
   configuration?: CampaignConfiguration;
   created_by?: string | null;
@@ -49,6 +52,16 @@ export interface ContactOption {
   unsubscribed: boolean;
 }
 
+export interface TemplateOption {
+  id: string;
+  name: string;
+  purpose?: string;
+  subject?: string;
+  active?: boolean;
+  version?: number;
+  [key: string]: any;
+}
+
 export default function CampaignsPage() {
   const { info } = useToast();
 
@@ -60,6 +73,10 @@ export default function CampaignsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
+  // Templates State
+  const [availableTemplates, setAvailableTemplates] = useState<TemplateOption[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState<boolean>(false);
+
   // Create Campaign Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -69,6 +86,8 @@ export default function CampaignsPage() {
 
   const [formData, setFormData] = useState({
     name: "",
+    description: "",
+    template_id: "",
     registration_url: "https://example.com/",
     followup_delay_minutes: 1,
     sending_delay_seconds: 3600,
@@ -138,14 +157,25 @@ export default function CampaignsPage() {
   useEffect(() => {
     fetchCampaigns();
     fetchContacts();
+    getTemplates()
+      .then((data) => {
+        if (Array.isArray(data)) setAvailableTemplates(data);
+      })
+      .catch((err) => console.warn("Failed to prefetch templates:", err));
   }, [fetchCampaigns, fetchContacts]);
 
-  // Load available contacts when opening Create Modal
+  // Load available contacts and templates when opening Create Modal
   const loadContactsForModal = async () => {
     setLoadingContacts(true);
+    setLoadingTemplates(true);
     try {
-      const data = await getEmailAgentContacts(0, 100);
-      if (Array.isArray(data)) {
+      const [contactsRes, templatesRes] = await Promise.allSettled([
+        getEmailAgentContacts(0, 100),
+        getTemplates(),
+      ]);
+
+      if (contactsRes.status === "fulfilled" && Array.isArray(contactsRes.value)) {
+        const data = contactsRes.value;
         setAvailableContacts(data);
         const map: Record<string, ContactOption> = {};
         data.forEach((c: ContactOption) => {
@@ -162,20 +192,34 @@ export default function CampaignsPage() {
         if (eligibleIds.length > 0) {
           setFormData((prev) => ({
             ...prev,
-            contact_ids: eligibleIds,
+            contact_ids: prev.contact_ids.length > 0 ? prev.contact_ids : eligibleIds,
+          }));
+        }
+      }
+
+      if (templatesRes.status === "fulfilled" && Array.isArray(templatesRes.value)) {
+        const tplData = templatesRes.value;
+        setAvailableTemplates(tplData);
+        if (tplData.length > 0) {
+          setFormData((prev) => ({
+            ...prev,
+            template_id: prev.template_id || tplData[0].id,
           }));
         }
       }
     } catch (err) {
-      console.error("Failed to load contacts for campaign:", err);
+      console.error("Failed to load contacts or templates for campaign:", err);
     } finally {
       setLoadingContacts(false);
+      setLoadingTemplates(false);
     }
   };
 
   const handleOpenAdd = () => {
     setFormData({
       name: "",
+      description: "",
+      template_id: availableTemplates[0]?.id || "",
       registration_url: "https://example.com/",
       followup_delay_minutes: 1,
       sending_delay_seconds: 3600,
@@ -258,6 +302,8 @@ export default function CampaignsPage() {
     try {
       const response = await createCampaign({
         name: formData.name.trim(),
+        description: formData.description.trim() || undefined,
+        template_id: formData.template_id ? formData.template_id : undefined,
         contact_ids: formData.contact_ids,
         registration_url: formData.registration_url.trim(),
         followup_delay_minutes: Number(formData.followup_delay_minutes),
@@ -754,6 +800,7 @@ export default function CampaignsPage() {
     const q = search.toLowerCase();
     const matchesSearch =
       c.name.toLowerCase().includes(q) ||
+      (c.description && c.description.toLowerCase().includes(q)) ||
       c.id.toLowerCase().includes(q) ||
       (c.configuration?.registration_url &&
         c.configuration.registration_url.toLowerCase().includes(q));
@@ -797,8 +844,8 @@ export default function CampaignsPage() {
     const contactId = (log.contact_id || log.recipient_id || "").trim();
     const contact = contactId
       ? contactsMap[contactId] ||
-        contactsMap[contactId.toLowerCase()] ||
-        availableContacts.find((c) => c.id === contactId || c.id?.toLowerCase() === contactId.toLowerCase())
+      contactsMap[contactId.toLowerCase()] ||
+      availableContacts.find((c) => c.id === contactId || c.id?.toLowerCase() === contactId.toLowerCase())
       : null;
     const name = (contact?.name || log.name || "").toLowerCase();
     const email = (contact?.email || log.email || "").toLowerCase();
@@ -841,9 +888,8 @@ export default function CampaignsPage() {
               title="Refresh campaigns from API"
             >
               <svg
-                className={`w-3.5 h-3.5 text-gray-500 dark:text-gray-400 ${
-                  loading ? "animate-spin" : ""
-                }`}
+                className={`w-3.5 h-3.5 text-gray-500 dark:text-gray-400 ${loading ? "animate-spin" : ""
+                  }`}
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -940,11 +986,10 @@ export default function CampaignsPage() {
             <button
               type="button"
               onClick={() => setStatusFilter("All")}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
-                statusFilter === "All"
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${statusFilter === "All"
                   ? "bg-white dark:bg-gray-900 text-[#AA2D7B] dark:text-[#D85A9A] shadow-xs font-semibold"
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-              }`}
+                }`}
             >
               All ({campaigns.length})
             </button>
@@ -953,11 +998,10 @@ export default function CampaignsPage() {
                 key={st}
                 type="button"
                 onClick={() => setStatusFilter(st)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer capitalize ${
-                  statusFilter.toLowerCase() === st
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer capitalize ${statusFilter.toLowerCase() === st
                     ? "bg-white dark:bg-gray-900 text-[#AA2D7B] dark:text-[#D85A9A] shadow-xs font-semibold"
                     : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                }`}
+                  }`}
               >
                 {st} ({campaigns.filter((c) => (c.status || "").toLowerCase() === st).length})
               </button>
@@ -1070,6 +1114,11 @@ export default function CampaignsPage() {
                         <div className="font-semibold text-gray-900 dark:text-white">
                           {c.name}
                         </div>
+                        {c.description && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1 mt-0.5" title={c.description}>
+                            {c.description}
+                          </p>
+                        )}
                         <div className="flex items-center gap-1.5 mt-1">
                           <span className="text-[11px] font-mono text-gray-400 truncate max-w-[200px]" title={c.id}>
                             {c.id}
@@ -1367,6 +1416,87 @@ export default function CampaignsPage() {
                 />
               </div>
 
+              {/* Campaign Description */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                  Description <span className="text-gray-400 font-normal">(Optional)</span>
+                </label>
+                <textarea
+                  rows={2}
+                  maxLength={2000}
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Brief overview of the campaign objective, target audience, or workflow notes..."
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#AA2D7B] resize-none"
+                />
+              </div>
+
+              {/* Select Email Template */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
+                    Email Template <span className="text-gray-400 font-normal">(Select template for campaign)</span>
+                  </label>
+                  {loadingTemplates && (
+                    <span className="text-[11px] text-[#AA2D7B] flex items-center gap-1 font-medium">
+                      <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                        <path d="M12 2a10 10 0 0 1 10 10" />
+                      </svg>
+                      Loading templates...
+                    </span>
+                  )}
+                </div>
+
+                <div className="relative">
+                  <select
+                    value={formData.template_id}
+                    onChange={(e) => setFormData({ ...formData, template_id: e.target.value })}
+                    className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#AA2D7B] cursor-pointer appearance-none pr-9"
+                  >
+                    <option value="">-- Choose an Email Template --</option>
+                    {availableTemplates.map((tpl) => (
+                      <option key={tpl.id} value={tpl.id}>
+                        {tpl.name} {tpl.purpose ? `[${tpl.purpose.toUpperCase()}]` : ""} {tpl.subject ? `— ${tpl.subject}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path d="M6 9l6 6 6-6" />
+                    </svg>
+                  </div>
+                </div>
+
+                {/* Selected Template Preview Details */}
+                {(() => {
+                  const selectedTpl = availableTemplates.find((t) => t.id === formData.template_id);
+                  if (!selectedTpl) return null;
+                  return (
+                    <div className="mt-1.5 p-2.5 rounded-lg bg-purple-50/70 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/40 text-[11px]">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold text-purple-900 dark:text-purple-300 truncate">
+                          Template: {selectedTpl.name}
+                        </span>
+                        {selectedTpl.purpose && (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase bg-purple-200/70 dark:bg-purple-800/60 text-purple-800 dark:text-purple-200 shrink-0">
+                            {selectedTpl.purpose}
+                          </span>
+                        )}
+                      </div>
+                      {selectedTpl.subject && (
+                        <p className="text-gray-600 dark:text-gray-400 truncate mt-0.5">
+                          <span className="text-gray-400">Subject:</span> {selectedTpl.subject}
+                        </p>
+                      )}
+                      <p className="text-[10px] font-mono text-gray-400 truncate mt-0.5">
+                        Template ID: {selectedTpl.id}
+                      </p>
+                    </div>
+                  );
+                })()}
+              </div>
+
               {/* Registration URL */}
               <div>
                 <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
@@ -1536,15 +1666,14 @@ export default function CampaignsPage() {
                         <div
                           key={c.id}
                           onClick={() => handleToggleContact(c.id)}
-                          className={`p-2.5 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${
-                            isSelected ? "bg-[#AA2D7B]/5 dark:bg-[#AA2D7B]/15" : ""
-                          }`}
+                          className={`p-2.5 flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${isSelected ? "bg-[#AA2D7B]/5 dark:bg-[#AA2D7B]/15" : ""
+                            }`}
                         >
                           <div className="flex items-center gap-2.5 min-w-0">
                             <input
                               type="checkbox"
                               checked={isSelected}
-                              onChange={() => {}}
+                              onChange={() => { }}
                               className="rounded text-[#AA2D7B] focus:ring-[#AA2D7B] cursor-pointer"
                             />
                             <div className="min-w-0">
@@ -1558,11 +1687,10 @@ export default function CampaignsPage() {
                           </div>
 
                           <span
-                            className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full capitalize ${
-                              c.status === "eligible" && !c.unsubscribed
+                            className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full capitalize ${c.status === "eligible" && !c.unsubscribed
                                 ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400"
                                 : "bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400"
-                            }`}
+                              }`}
                           >
                             {c.unsubscribed ? "Unsubscribed" : c.status}
                           </span>
@@ -1657,6 +1785,18 @@ export default function CampaignsPage() {
                 <span className="font-semibold text-gray-700 dark:text-gray-300">Campaign Status</span>
                 <div>{renderStatusBadge(selectedCampaign.status)}</div>
               </div>
+
+              {/* Description if present */}
+              {selectedCampaign.description && (
+                <div className="p-3 rounded-xl bg-purple-50/60 dark:bg-purple-950/20 border border-purple-100 dark:border-purple-900/40 text-xs">
+                  <span className="font-semibold text-purple-900 dark:text-purple-300 block mb-1">
+                    Campaign Description
+                  </span>
+                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+                    {selectedCampaign.description}
+                  </p>
+                </div>
+              )}
 
               {/* Modal Direct Actions for Approve, Start, Pause, Resume, Stop */}
               <div className="flex items-center gap-2 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 flex-wrap">
@@ -1939,9 +2079,8 @@ export default function CampaignsPage() {
                   title="Refresh Logs from API"
                 >
                   <svg
-                    className={`w-3.5 h-3.5 text-gray-500 dark:text-gray-400 ${
-                      loadingLogs ? "animate-spin" : ""
-                    }`}
+                    className={`w-3.5 h-3.5 text-gray-500 dark:text-gray-400 ${loadingLogs ? "animate-spin" : ""
+                      }`}
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -2011,22 +2150,20 @@ export default function CampaignsPage() {
                   <button
                     type="button"
                     onClick={() => setViewRawJson(false)}
-                    className={`px-2.5 py-1 rounded-md transition cursor-pointer ${
-                      !viewRawJson
+                    className={`px-2.5 py-1 rounded-md transition cursor-pointer ${!viewRawJson
                         ? "bg-white dark:bg-gray-900 text-purple-700 dark:text-purple-300 shadow-xs font-semibold"
                         : "text-gray-500 hover:text-gray-800 dark:hover:text-white"
-                    }`}
+                      }`}
                   >
                     Table View
                   </button>
                   <button
                     type="button"
                     onClick={() => setViewRawJson(true)}
-                    className={`px-2.5 py-1 rounded-md transition cursor-pointer ${
-                      viewRawJson
+                    className={`px-2.5 py-1 rounded-md transition cursor-pointer ${viewRawJson
                         ? "bg-white dark:bg-gray-900 text-purple-700 dark:text-purple-300 shadow-xs font-semibold"
                         : "text-gray-500 hover:text-gray-800 dark:hover:text-white"
-                    }`}
+                      }`}
                   >
                     Raw JSON
                   </button>
@@ -2116,10 +2253,10 @@ export default function CampaignsPage() {
                           const contactId = (log.contact_id || log.recipient_id || "").trim();
                           const contact = contactId
                             ? contactsMap[contactId] ||
-                              contactsMap[contactId.toLowerCase()] ||
-                              availableContacts.find(
-                                (c) => c.id === contactId || c.id?.toLowerCase() === contactId.toLowerCase()
-                              )
+                            contactsMap[contactId.toLowerCase()] ||
+                            availableContacts.find(
+                              (c) => c.id === contactId || c.id?.toLowerCase() === contactId.toLowerCase()
+                            )
                             : null;
                           const contactName = contact?.name || log.name || (contactId ? `Contact (${contactId.slice(0, 8)}...)` : "Unknown Recipient");
                           const contactEmail = contact?.email || log.email || log.recipient || log.contact_email || "—";
@@ -2225,11 +2362,10 @@ export default function CampaignsPage() {
                                   <button
                                     type="button"
                                     onClick={() => toggleLogExpand(log.id || String(idx))}
-                                    className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg border transition cursor-pointer ${
-                                      isExpanded
+                                    className={`inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg border transition cursor-pointer ${isExpanded
                                         ? "bg-[#AA2D7B] text-white border-[#AA2D7B]"
                                         : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border-gray-200 dark:border-gray-700"
-                                    }`}
+                                      }`}
                                   >
                                     <span>{isExpanded ? "Hide" : "Details"}</span>
                                     <svg
