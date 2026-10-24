@@ -69,10 +69,6 @@ export default function SessionsPage() {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
 
-  // Quick ID Lookup bar
-  const [lookupIdInput, setLookupIdInput] = useState("");
-  const [isLookupLoading, setIsLookupLoading] = useState(false);
-  const [showLookupBox, setShowLookupBox] = useState(false);
 
   // Fetch Speakers list to map speaker_id -> speaker details
   const fetchSpeakersData = useCallback(async () => {
@@ -154,33 +150,6 @@ export default function SessionsPage() {
     }
   };
 
-  // Direct ID Lookup handler (GET /api/schedules?id={id})
-  const handleLookupSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const idToFind = lookupIdInput.trim();
-    if (!idToFind) {
-      toastError("Please enter a Session / Schedule ID");
-      return;
-    }
-
-    setIsLookupLoading(true);
-    try {
-      const result: any = await getSessionById(Number(idToFind));
-      if (result) {
-        setSelectedSession(result as SessionItem);
-        setIsDetailsModalOpen(true);
-        success(`Found Session: "${result.title || result.id}"`);
-        setLookupIdInput("");
-        setShowLookupBox(false);
-      } else {
-        toastError(`Session with ID "${idToFind}" not found.`);
-      }
-    } catch (err: any) {
-      toastError(err?.message || `Could not find session with ID "${idToFind}"`);
-    } finally {
-      setIsLookupLoading(false);
-    }
-  };
 
   // Open Add Modal
   const handleOpenAddModal = () => {
@@ -400,22 +369,6 @@ export default function SessionsPage() {
               ))}
             </select>
 
-            {/* Lookup by ID Button */}
-            <button
-              type="button"
-              onClick={() => setShowLookupBox((prev) => !prev)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
-                showLookupBox
-                  ? "bg-[#55355E] text-white border-[#55355E]"
-                  : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700 hover:border-[#AA2D7B]"
-              }`}
-              title="Lookup Session by ID"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <span>Get by ID</span>
-            </button>
 
             {/* Refresh Live API */}
             <button
@@ -469,51 +422,6 @@ export default function SessionsPage() {
           </div>
         )}
 
-        {/* Lookup by ID Dropdown Panel */}
-        {showLookupBox && (
-          <div className="mb-4 p-4 rounded-xl border border-[#AA2D7B]/30 bg-gradient-to-r from-pink-50/50 to-purple-50/40 dark:from-gray-800 dark:to-gray-800/80 animate-fadeIn">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="text-xs font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-                <svg className="w-4 h-4 text-[#AA2D7B]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 21h7a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v11m0 5l4.879-4.879m0 0a3 3 0 104.243-4.242 3 3 0 00-4.243 4.242z" />
-                </svg>
-                <span>Get Session by ID (/api/schedules?id=...)</span>
-              </h4>
-              <button
-                type="button"
-                onClick={() => setShowLookupBox(false)}
-                className="text-gray-400 hover:text-gray-600 text-xs"
-              >
-                ✕ Close
-              </button>
-            </div>
-            <form onSubmit={handleLookupSubmit} className="flex gap-2">
-              <input
-                type="number"
-                value={lookupIdInput}
-                onChange={(e) => setLookupIdInput(e.target.value)}
-                placeholder="Enter Session / Schedule ID (e.g. 1, 2, 4)..."
-                className="flex-1 px-3 py-2 text-xs border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-[#AA2D7B]"
-              />
-              <button
-                type="submit"
-                disabled={isLookupLoading}
-                className="px-4 py-2 text-xs font-semibold text-white bg-[#55355E] hover:bg-[#6c4377] rounded-lg transition-colors flex items-center gap-1.5 disabled:opacity-50"
-              >
-                {isLookupLoading ? (
-                  <>
-                    <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    <span>Fetching...</span>
-                  </>
-                ) : (
-                  <span>Fetch by ID</span>
-                )}
-              </button>
-            </form>
-          </div>
-        )}
 
         {/* Stats Row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">

@@ -231,24 +231,7 @@ export default function Home() {
         title="Conference Overview"
         subtitle="Live metrics, real-time schedule analytics, and faculty & delegate management for Kaizen Con 2027."
         searchPlaceholder="Type to search dashboard..."
-        actionButton={
-          <div className="flex items-center gap-2">
-            <Link
-              to="/speakers"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#55355E] bg-white border border-[#AA2D7B]/30 hover:bg-[#faedf5] rounded-lg transition-colors shadow-xs"
-            >
-              <SpeakersIcon className="w-3.5 h-3.5" />
-              Manage Speakers
-            </Link>
-            <Link
-              to="/sessions"
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-[#AA2D7B] hover:bg-[#D85A9A] rounded-lg shadow-xs transition-colors"
-            >
-              <SessionsIcon className="w-3.5 h-3.5" />
-              Manage Sessions
-            </Link>
-          </div>
-        }
+       
       >
         <div className="space-y-6">
           {/* Welcome Hero Card with real live stats */}
@@ -258,10 +241,8 @@ export default function Home() {
                 <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/20 backdrop-blur-xs text-white">
                   Live Conference Data
                 </span>
-                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-white/90">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  Real API Connected
-                </span>
+                
+              
               </div>
               <h2 className="text-xl md:text-2xl font-black tracking-tight text-white">
                 Kaizen Con 2027 Administration Portal
