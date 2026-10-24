@@ -43,28 +43,6 @@ export function LoginForm() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  /**
-   * One-click demo login helper
-   */
-  const handleQuickLogin = () => {
-    saveAuthSession({
-      token: "kaizen_auth_token_" + Date.now(),
-      user: {
-        id: 1,
-        adminId: 1,
-        firstName: "Kaizen",
-        lastName: "Admin",
-        fullName: "Kaizen Administrator",
-        email: "user@example.com",
-        role: "Super Administrator",
-      },
-      adminId: 1,
-    });
-    setSuccessMessage("Authentication successful! Redirecting to Kaizen Con Admin...");
-    setTimeout(() => {
-      navigate(destination, { replace: true });
-    }, 400);
-  };
 
   /**
    * Submit credentials to FastAPI /api/admin_login via adminLogin (ApiPath.js)
@@ -322,15 +300,6 @@ export function LoginForm() {
           ) : (
             <span>Sign In to Dashboard &rarr;</span>
           )}
-        </button>
-
-        {/* Quick Demo Access Button */}
-        <button
-          type="button"
-          onClick={handleQuickLogin}
-          className="w-full h-10 rounded-xl border border-[#AA2D7B]/30 hover:bg-[#faedf5] text-[#55355E] text-xs font-semibold transition-colors flex items-center justify-center cursor-pointer"
-        >
-          Quick One-Click Admin Access
         </button>
       </form>
     </div>

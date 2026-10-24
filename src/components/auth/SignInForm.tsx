@@ -8,7 +8,7 @@ import {
   ErrorIcon,
   CheckCircleIcon,
 } from "../../icons";
-import { validateAdminCredential, saveAuthSession } from "../../services/authService";
+import { validateAdminCredential } from "../../services/authService";
 
 export default function SignInForm() {
   const navigate = useNavigate();
@@ -31,22 +31,6 @@ export default function SignInForm() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const performLogin = (userEmail: string) => {
-    saveAuthSession({
-      token: "kaizen_auth_token_" + Date.now(),
-      user: {
-        firstName: "Kaizen",
-        lastName: "Admin",
-        email: userEmail,
-        role: "Super Administrator",
-      },
-      adminId: 1,
-    });
-    setSuccessMessage("Authentication successful! Redirecting to Kaizen Con Admin...");
-    setTimeout(() => {
-      navigate(destination, { replace: true });
-    }, 400);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -252,15 +236,6 @@ export default function SignInForm() {
           ) : (
             <span>Sign In to Dashboard &rarr;</span>
           )}
-        </button>
-
-        {/* Quick Demo Access Button */}
-        <button
-          type="button"
-          onClick={() => performLogin("user@example.com")}
-          className="w-full h-10 rounded-xl border border-[#AA2D7B]/30 hover:bg-[#faedf5] text-[#55355E] text-xs font-semibold transition-colors flex items-center justify-center cursor-pointer"
-        >
-          Quick One-Click Admin Access
         </button>
       </form>
     </div>

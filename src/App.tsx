@@ -18,6 +18,7 @@ import UsersPage from "./pages/System/UsersPage";
 import GroupsPage from "./pages/System/GroupsPage";
 import SendToEmailPage from "./pages/AgentSettings/SendToEmailPage";
 import CampaignsPage from "./pages/AgentSettings/CampaignsPage";
+import CreateCampaignPage from "./pages/AgentSettings/CreateCampaignPage";
 import TemplatesPage from "./pages/AgentSettings/TemplatesPage";
 import PollsPage from "./pages/Conference/PollsPage";
 
@@ -55,8 +56,11 @@ export default function App() {
               <Route path="/agent-settings/send-to-email" element={<SendToEmailPage />} />
 
               <Route path="/campaigns" element={<CampaignsPage />} />
+              <Route path="/campaigns/create" element={<CreateCampaignPage />} />
               <Route path="/conference/campaigns" element={<CampaignsPage />} />
+              <Route path="/conference/campaigns/create" element={<CreateCampaignPage />} />
               <Route path="/agent-settings/campaigns" element={<CampaignsPage />} />
+              <Route path="/agent-settings/campaigns/create" element={<CreateCampaignPage />} />
 
               <Route path="/templates" element={<TemplatesPage />} />
               <Route path="/conference/templates" element={<TemplatesPage />} />
